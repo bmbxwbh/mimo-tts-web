@@ -142,9 +142,6 @@ jobs:
             ### 📦 Docker 镜像
 
             ```bash
-            # 登录 GHCR
-            echo "YOUR_GITHUB_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
             # 拉取镜像
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}
 

@@ -144,6 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 初始化各模块
     initApiKey();
+    initApiKeyModal();
     initSidebar();
     initTabSwitch();
     initPresetPanel();
@@ -198,6 +199,7 @@ function initApiKey() {
     testBtn.addEventListener('click', async () => {
         if (!input.value.trim()) {
             UI.toast('请先输入 API Key', 'error');
+            document.getElementById('api-key-modal').classList.remove('hidden');
             return;
         }
         testBtn.disabled = true;
@@ -223,6 +225,54 @@ function initApiKey() {
             testBtn.disabled = false;
         }
     });
+}
+
+/* ==================== API Key 弹窗 ==================== */
+
+function initApiKeyModal() {
+    const modal = document.getElementById('api-key-modal');
+    const modalInput = document.getElementById('modal-api-key');
+    const modalToggle = document.getElementById('modal-toggle-key');
+    const modalSaveBtn = document.getElementById('modal-save-btn');
+    const sidebarInput = document.getElementById('api-key-input');
+
+    // 没有 API Key 时显示弹窗
+    if (!API.getApiKey()) {
+        modal.classList.remove('hidden');
+    } else {
+        modal.classList.add('hidden');
+    }
+
+    // 显示/隐藏密码
+    modalToggle.addEventListener('click', () => {
+        modalInput.type = modalInput.type === 'password' ? 'text' : 'password';
+    });
+
+    // 保存
+    modalSaveBtn.addEventListener('click', () => {
+        const key = modalInput.value.trim();
+        if (!key) {
+            UI.toast('请输入 API Key', 'error');
+            return;
+        }
+        API.setApiKey(key);
+        sidebarInput.value = key;
+        modal.classList.add('hidden');
+        UI.toast('API Key 已保存', 'success');
+    });
+
+    // Enter 键保存
+    modalInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') modalSaveBtn.click();
+    });
+
+    // 点击遮罩不关闭（强制填写）
+    // 但允许已有 Key 的用户通过右上角关闭
+    if (API.getApiKey()) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        });
+    }
 }
 
 /* ==================== 侧边栏 ==================== */
@@ -338,6 +388,7 @@ async function handlePresetSynthesis() {
     const apiKey = API.getApiKey();
     if (!apiKey) {
         UI.toast('请先输入 API Key', 'error');
+        document.getElementById('api-key-modal').classList.remove('hidden');
         return;
     }
 
@@ -484,7 +535,7 @@ function renderVDStyleTags() {
 
 async function handleVDSynthesis() {
     const apiKey = API.getApiKey();
-    if (!apiKey) { UI.toast('请先输入 API Key', 'error'); return; }
+    if (!apiKey) { UI.toast('请先输入 API Key', 'error'); document.getElementById('api-key-modal').classList.remove('hidden'); return; }
 
     const isBatch = document.getElementById('vd-batch-toggle').checked;
     const isStream = document.getElementById('vd-stream-toggle').checked;
@@ -636,7 +687,7 @@ function renderVCStyleTags() {
 
 async function handleVCSynthesis() {
     const apiKey = API.getApiKey();
-    if (!apiKey) { UI.toast('请先输入 API Key', 'error'); return; }
+    if (!apiKey) { UI.toast('请先输入 API Key', 'error'); document.getElementById('api-key-modal').classList.remove('hidden'); return; }
 
     if (!State.voiceclone.audioBase64) {
         UI.toast('请先上传音频样本', 'error');
@@ -947,7 +998,7 @@ function updateBatchCount(panel) {
 
 async function handleBatchSynthesis(panel) {
     const apiKey = API.getApiKey();
-    if (!apiKey) { UI.toast('请先输入 API Key', 'error'); return; }
+    if (!apiKey) { UI.toast('请先输入 API Key', 'error'); document.getElementById('api-key-modal').classList.remove('hidden'); return; }
     if (State.batchRunning) { UI.toast('批量合成进行中', 'info'); return; }
 
     const taId = panel === 'preset' ? 'preset-text' : `${panel === 'voicedesign' ? 'voicedesign-tagged-text' : 'voiceclone-tagged-text'}`;

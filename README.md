@@ -114,56 +114,71 @@ python main.py
 
 #### 环境要求
 
-- Docker + Docker Compose
+- Docker
 
-#### 首次部署
+#### 快速启动（推荐）
 
 ```bash
-# 1. 登录 GitHub Container Registry（需要一个 GitHub Personal Access Token）
-echo "YOUR_GITHUB_TOKEN" | docker login ghcr.io -u 你的GitHub用户名 --password-stdin
+# 一条命令搞定：拉取镜像 + 启动服务
+docker run -d \
+  --name mimo-tts-web \
+  -p 26645:26645 \
+  --restart unless-stopped \
+  ghcr.io/bmbxwbh/mimo-tts-web:latest
+```
 
-# 2. 拉取镜像并启动
+启动后会输出容器 ID，访问 **http://你的服务器IP:26645** 即可使用。
+
+#### 使用 docker-compose（可选）
+
+如果习惯用 docker-compose，将以下内容保存为 `docker-compose.yml`：
+
+```yaml
+version: "3.8"
+services:
+  mimo-tts-web:
+    image: ghcr.io/bmbxwbh/mimo-tts-web:latest
+    ports:
+      - "26645:26645"
+    restart: unless-stopped
+```
+
+然后执行：
+
+```bash
 docker compose up -d
 ```
 
-浏览器打开 **http://你的服务器IP:26645**
+> 如果提示 `unauthorized`，说明镜像包尚未设为公开。
+> 前往 GitHub → Packages → mimo-tts-web → Package Settings → Change visibility → Public，
+> 或手动登录：`echo "YOUR_TOKEN" | docker login ghcr.io -u bmbxwbh --password-stdin`
 
 #### 日常更新
 
-当 GitHub 上有新版本发布时，服务器端只需：
-
 ```bash
+# docker run 方式
+docker pull ghcr.io/bmbxwbh/mimo-tts-web:latest
+docker rm -f mimo-tts-web
+docker run -d --name mimo-tts-web -p 26645:26645 --restart unless-stopped ghcr.io/bmbxwbh/mimo-tts-web:latest
+
+# docker-compose 方式
 docker compose pull && docker compose up -d
 ```
-
-两条命令完成更新，无需编译、无需安装依赖。
 
 #### 常用命令
 
 ```bash
 # 查看运行日志
-docker compose logs -f
+docker logs -f mimo-tts-web
 
 # 停止服务
-docker compose down
+docker stop mimo-tts-web
 
 # 重启服务
-docker compose restart
+docker restart mimo-tts-web
 
 # 查看容器状态
-docker compose ps
-```
-
-#### 自动更新（可选）
-
-设置 crontab 每天凌晨自动拉取最新镜像并重启：
-
-```bash
-# 编辑 crontab
-crontab -e
-
-# 添加以下行（每天 3:00 执行）
-0 3 * * * cd /path/to/mimo-tts-web && docker compose pull && docker compose up -d >> /var/log/mimo-tts-update.log 2>&1
+docker ps | grep mimo-tts-web
 ```
 
 ---
