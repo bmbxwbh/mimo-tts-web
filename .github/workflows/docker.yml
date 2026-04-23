@@ -1,4 +1,4 @@
-name: Build & Push Docker Image
+name: Build & Release
 
 on:
   push:
@@ -12,18 +12,22 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # ─── Job 1: 构建并推送 Docker 镜像 ───
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tags: ${{ steps.meta.outputs.tags }}
+      digest: ${{ steps.build.outputs.digest }}
+
     steps:
-      # 1. 拉取代码
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. 登录 GitHub Container Registry
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -31,28 +35,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. 设置 Docker Buildx（构建缓存加速）
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 4. 提取镜像标签
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # main 分支 → latest
             type=raw,value=latest,enable={{is_default_branch}}
-            # v1.0.0 标签 → 1.0.0
             type=semver,pattern={{version}}
-            # v1.0.0 标签 → 1.0
             type=semver,pattern={{major}}.{{minor}}
-            # 每次提交 → sha-abc1234
             type=sha,prefix=sha-
 
-      # 5. 构建并推送镜像
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -62,3 +60,106 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
+
+  # ─── Job 2: 自动创建 GitHub Release（仅 tag 推送时触发）───
+  release:
+    needs: build-and-push
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # 获取上一个 tag
+          PREV_TAG=$(git tag --sort=-v:refname | head -2 | tail -1)
+          if [ -z "$PREV_TAG" ]; then
+            echo "changes<<EOF" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s (%h)" HEAD | head -20 >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "changes<<EOF" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: |
+            ## 🚀 MiMo TTS Web ${{ github.ref_name }}
+
+            ### 📦 Docker 镜像
+
+            ```bash
+            # 登录 GHCR
+            echo "YOUR_GITHUB_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 拉取镜像
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}
+
+            # 启动服务
+            docker compose up -d
+            ```
+
+            **多架构支持：** `linux/amd64` + `linux/arm64`
+
+            ### 📝 更新内容
+
+            ${{ steps.changelog.outputs.changes }}
+
+            ### 🔗 镜像信息
+
+            - 镜像：`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}`
+            - Digest：`${{ needs.build-and-push.outputs.digest }}`
+          draft: false
+          prerelease: false
+
+  # ─── Job 3: main 分支推送时自动打 tag ───
+  auto-tag:
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Auto bump version
+        id: version
+        run: |
+          # 获取最新 tag，自动递增 patch 版本
+          LATEST_TAG=$(git tag --sort=-v:refname | grep '^v' | head -1)
+          if [ -z "$LATEST_TAG" ]; then
+            NEW_TAG="v1.0.0"
+          else
+            # 去掉 v 前缀，拆分版本号
+            VER=${LATEST_TAG#v}
+            MAJOR=$(echo $VER | cut -d. -f1)
+            MINOR=$(echo $VER | cut -d. -f2)
+            PATCH=$(echo $VER | cut -d. -f3)
+            NEW_PATCH=$((PATCH + 1))
+            NEW_TAG="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+          fi
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "📌 New tag: $NEW_TAG"
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin ${{ steps.version.outputs.tag }}
