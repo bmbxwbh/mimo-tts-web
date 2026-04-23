@@ -5,7 +5,6 @@ MiMo-V2.5-TTS Web UI — 合成路由
 支持非流式（WAV 下载）和流式（WebSocket PCM 实时推送）。
 """
 
-import asyncio
 import base64
 import json
 import time

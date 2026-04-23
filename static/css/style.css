@@ -322,10 +322,7 @@ body {
 
 .sidebar.collapsed .logo-text,
 .sidebar.collapsed .nav-item span,
-.sidebar.collapsed .sidebar-footer .settings-label span,
-.sidebar.collapsed .api-key-input-wrap,
-.sidebar.collapsed .sidebar-footer .btn,
-.sidebar.collapsed .connection-status,
+.sidebar.collapsed .sidebar-footer .sidebar-api-label,
 .sidebar.collapsed .toggle-hint {
     display: none;
 }
@@ -333,6 +330,10 @@ body {
 .sidebar.collapsed .nav-item {
     justify-content: center;
     padding: 12px;
+}
+
+.sidebar.collapsed .sidebar-api-status {
+    justify-content: center;
 }
 
 .sidebar.collapsed .sidebar-toggle {
@@ -1352,11 +1353,11 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    padding: 8px 4px;
+    padding: 8px 2px;
     border: none;
     background: transparent;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 9px;
     font-family: var(--font-sans);
     cursor: pointer;
     transition: color var(--transition-fast);
@@ -1395,10 +1396,7 @@ body {
 
     .sidebar .logo-text,
     .sidebar .nav-item span,
-    .sidebar .sidebar-footer .settings-label span,
-    .sidebar .api-key-input-wrap,
-    .sidebar .sidebar-footer .btn,
-    .sidebar .connection-status,
+    .sidebar .sidebar-footer .sidebar-api-label,
     .sidebar .toggle-hint {
         display: none;
     }
@@ -1406,6 +1404,10 @@ body {
     .sidebar .nav-item {
         justify-content: center;
         padding: 12px;
+    }
+
+    .sidebar .sidebar-api-status {
+        justify-content: center;
     }
 
     .sidebar-toggle {
@@ -1782,6 +1784,195 @@ body {
     50% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0); }
 }
 
+/* ====== 设置面板 ====== */
+.settings-card {
+    transition: border-color var(--transition-base);
+}
+
+.settings-card-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+    line-height: 1.6;
+}
+
+.settings-status-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.settings-status-off {
+    background: rgba(248, 113, 113, 0.1);
+    color: var(--error);
+}
+
+.settings-status-on {
+    background: rgba(52, 211, 153, 0.1);
+    color: var(--success);
+}
+
+.settings-api-input-wrap {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.settings-api-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+}
+
+.settings-param-group {
+    margin-bottom: var(--space-md);
+}
+
+.settings-param-group:last-child {
+    margin-bottom: 0;
+}
+
+.settings-param-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.settings-select {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: var(--font-sans);
+    outline: none;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a5a70' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.settings-select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.settings-select option {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+/* 关于页 */
+.about-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.about-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.about-item:last-child {
+    border-bottom: none;
+}
+
+.about-label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.about-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+.about-link {
+    font-size: 13px;
+    color: var(--accent-hover);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.about-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+/* 侧边栏 API 状态指示 */
+.sidebar-api-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background var(--transition-base), box-shadow var(--transition-base);
+}
+
+.status-dot-red {
+    background: var(--error);
+    box-shadow: 0 0 6px rgba(248, 113, 113, 0.4);
+}
+
+.status-dot-green {
+    background: var(--success);
+    box-shadow: 0 0 6px rgba(52, 211, 153, 0.4);
+}
+
+.sidebar-api-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    transition: color var(--transition-fast);
+}
+
+/* 合成按钮增强 */
+.btn-synthesize {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-synthesize::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-synthesize:hover::before {
+    left: 100%;
+}
+
 /* 小手机 ≤ 480px */
 @media (max-width: 480px) {
     html { font-size: 13px; }
@@ -1815,5 +2006,19 @@ body {
 
     .param-rows {
         flex-direction: column;
+    }
+
+    .settings-api-input-wrap {
+        flex-direction: column;
+    }
+
+    .settings-api-actions {
+        flex-direction: column;
+    }
+
+    .about-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
     }
 }

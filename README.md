@@ -405,16 +405,17 @@ environment:
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | `POST` | `/api/synthesize/preset` | 预置音色合成（非流式） |
-| `POST` | `/api/synthesize/preset/batch` | 预置音色批量合成 |
+| `POST` | `/api/synthesize/batch/preset` | 预置音色批量合成 |
 | `POST` | `/api/synthesize/voicedesign` | 音色设计合成（非流式） |
-| `POST` | `/api/synthesize/voicedesign/batch` | 音色设计批量合成 |
+| `POST` | `/api/synthesize/batch/voicedesign` | 音色设计批量合成 |
 | `POST` | `/api/synthesize/voiceclone` | 音色复刻合成（非流式） |
-| `POST` | `/api/synthesize/voiceclone/batch` | 音色复刻批量合成 |
-| `WS`   | `/ws/synthesize` | 流式合成（WebSocket） |
+| `POST` | `/api/synthesize/batch/voiceclone` | 音色复刻批量合成 |
+| `WS`   | `/api/ws/synthesize` | 流式合成（WebSocket） |
 | `GET`  | `/api/test-connection` | 测试 API Key 连接 |
 | `GET`  | `/api/voices` | 获取音色列表 |
-| `GET`  | `/api/styles` | 获取风格标签列表 |
-| `GET`  | `/health` | 健康检查 |
+| `GET`  | `/api/style-tags` | 获取风格标签列表 |
+| `GET`  | `/api/audio-tags` | 获取音频标签列表 |
+| `GET`  | `/api/health` | 健康检查 |
 
 ### 请求示例
 

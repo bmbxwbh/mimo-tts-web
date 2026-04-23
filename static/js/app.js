@@ -150,6 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initPresetPanel();
     initVoiceDesignPanel();
     initVoiceClonePanel();
+    initSettingsPanel();
     initHistoryPanel();
 
     // 渲染历史
@@ -177,54 +178,13 @@ async function loadConfigData() {
 /* ==================== API Key ==================== */
 
 function initApiKey() {
-    const input = document.getElementById('api-key-input');
-    const toggleBtn = document.getElementById('toggle-key-visibility');
-    const testBtn = document.getElementById('test-connection-btn');
-    const status = document.getElementById('connection-status');
-
-    // 恢复
-    input.value = API.getApiKey();
-
-    // 保存
-    input.addEventListener('input', () => {
-        API.setApiKey(input.value.trim());
-    });
-
-    // 显示/隐藏
-    toggleBtn.addEventListener('click', () => {
-        input.type = input.type === 'password' ? 'text' : 'password';
-    });
-
-    // 测试连接
-    testBtn.addEventListener('click', async () => {
-        if (!input.value.trim()) {
-            UI.toast('请先输入 API Key', 'error');
-            document.getElementById('api-key-modal').classList.remove('hidden');
-            return;
-        }
-        testBtn.disabled = true;
-        status.className = 'connection-status testing';
-        status.textContent = '测试中…';
-
-        try {
-            const result = await API.testConnection();
-            if (result.success) {
-                status.className = 'connection-status success';
-                status.textContent = '✓ ' + result.message;
-                UI.toast('连接成功', 'success');
-            } else {
-                status.className = 'connection-status error';
-                status.textContent = '✗ ' + result.message;
-                UI.toast(result.message, 'error');
-            }
-        } catch (e) {
-            status.className = 'connection-status error';
-            status.textContent = '✗ 网络错误';
-            UI.toast('网络错误: ' + e.message, 'error');
-        } finally {
-            testBtn.disabled = false;
-        }
-    });
+    // API Key 管理已移至设置面板 (initSettingsPanel)
+    // 此处仅更新侧边栏状态指示
+    const sidebarDot = document.getElementById('sidebar-api-dot');
+    const sidebarLabel = document.querySelector('.sidebar-api-label');
+    const hasKey = !!API.getApiKey();
+    if (sidebarDot) sidebarDot.className = `status-dot ${hasKey ? 'status-dot-green' : 'status-dot-red'}`;
+    if (sidebarLabel) sidebarLabel.textContent = hasKey ? 'API 已连接' : 'API 未配置';
 }
 
 /* ==================== API Key 弹窗 ==================== */
@@ -234,7 +194,7 @@ function initApiKeyModal() {
     const modalInput = document.getElementById('modal-api-key');
     const modalToggle = document.getElementById('modal-toggle-key');
     const modalSaveBtn = document.getElementById('modal-save-btn');
-    const sidebarInput = document.getElementById('api-key-input');
+    const settingsInput = document.getElementById('settings-api-key');
 
     // 没有 API Key 时显示弹窗
     if (!API.getApiKey()) {
@@ -256,7 +216,17 @@ function initApiKeyModal() {
             return;
         }
         API.setApiKey(key);
-        sidebarInput.value = key;
+        if (settingsInput) settingsInput.value = key;
+        // 更新设置面板状态
+        const apiStatus = document.getElementById('settings-api-status');
+        const sidebarDot = document.getElementById('sidebar-api-dot');
+        const sidebarLabel = document.querySelector('.sidebar-api-label');
+        if (apiStatus) {
+            apiStatus.textContent = '已配置';
+            apiStatus.className = 'settings-status-badge settings-status-on';
+        }
+        if (sidebarDot) sidebarDot.className = 'status-dot status-dot-green';
+        if (sidebarLabel) sidebarLabel.textContent = 'API 已连接';
         modal.classList.add('hidden');
         UI.toast('API Key 已保存', 'success');
     });
@@ -272,6 +242,124 @@ function initApiKeyModal() {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) modal.classList.add('hidden');
         });
+    }
+}
+
+/* ==================== 设置面板 ==================== */
+
+function initSettingsPanel() {
+    const keyInput = document.getElementById('settings-api-key');
+    const toggleBtn = document.getElementById('settings-toggle-key');
+    const saveBtn = document.getElementById('settings-save-key');
+    const testBtn = document.getElementById('settings-test-btn');
+    const statusEl = document.getElementById('settings-connection-status');
+    const apiStatus = document.getElementById('settings-api-status');
+    const sidebarDot = document.getElementById('sidebar-api-dot');
+    const sidebarLabel = document.querySelector('.sidebar-api-label');
+
+    // 填充默认音色下拉
+    const voiceSelect = document.getElementById('settings-default-voice');
+    State.voices.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.id;
+        opt.textContent = `${v.name} (${v.language})`;
+        voiceSelect.appendChild(opt);
+    });
+
+    // 恢复已保存的设置
+    keyInput.value = API.getApiKey();
+    const savedVoice = localStorage.getItem('mimo_default_voice') || 'mimo_default';
+    voiceSelect.value = savedVoice;
+    const savedStream = localStorage.getItem('mimo_default_stream') === 'true';
+    document.getElementById('settings-default-stream').checked = savedStream;
+
+    // 更新状态指示
+    function updateApiStatus() {
+        const hasKey = !!API.getApiKey();
+        apiStatus.textContent = hasKey ? '已配置' : '未配置';
+        apiStatus.className = `settings-status-badge ${hasKey ? 'settings-status-on' : 'settings-status-off'}`;
+        if (sidebarDot) sidebarDot.className = `status-dot ${hasKey ? 'status-dot-green' : 'status-dot-red'}`;
+        if (sidebarLabel) sidebarLabel.textContent = hasKey ? 'API 已连接' : 'API 未配置';
+    }
+    updateApiStatus();
+
+    // 显示/隐藏密码
+    toggleBtn.addEventListener('click', () => {
+        keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
+    });
+
+    // 保存 API Key
+    saveBtn.addEventListener('click', () => {
+        const key = keyInput.value.trim();
+        if (!key) {
+            UI.toast('请输入 API Key', 'error');
+            return;
+        }
+        API.setApiKey(key);
+        updateApiStatus();
+        UI.toast('API Key 已保存', 'success');
+    });
+
+    // Enter 保存
+    keyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveBtn.click();
+    });
+
+    // 测试连接
+    testBtn.addEventListener('click', async () => {
+        if (!keyInput.value.trim()) {
+            UI.toast('请先输入 API Key', 'error');
+            return;
+        }
+        // 先保存
+        API.setApiKey(keyInput.value.trim());
+        updateApiStatus();
+
+        testBtn.disabled = true;
+        statusEl.className = 'connection-status testing';
+        statusEl.textContent = '测试中…';
+
+        try {
+            const result = await API.testConnection();
+            if (result.success) {
+                statusEl.className = 'connection-status success';
+                statusEl.textContent = '✓ ' + result.message;
+                UI.toast('连接成功', 'success');
+            } else {
+                statusEl.className = 'connection-status error';
+                statusEl.textContent = '✗ ' + result.message;
+                UI.toast(result.message, 'error');
+            }
+        } catch (e) {
+            statusEl.className = 'connection-status error';
+            statusEl.textContent = '✗ 网络错误';
+            UI.toast('网络错误: ' + e.message, 'error');
+        } finally {
+            testBtn.disabled = false;
+        }
+    });
+
+    // 保存默认音色
+    voiceSelect.addEventListener('change', () => {
+        localStorage.setItem('mimo_default_voice', voiceSelect.value);
+        State.selectedVoice = voiceSelect.value;
+        UI.updateVoiceSelection(voiceSelect.value);
+        UI.toast('默认音色已更新', 'success');
+    });
+
+    // 保存默认流式
+    document.getElementById('settings-default-stream').addEventListener('change', (e) => {
+        localStorage.setItem('mimo_default_stream', e.target.checked);
+        document.getElementById('preset-stream-toggle').checked = e.target.checked;
+        document.getElementById('voicedesign-stream-toggle').checked = e.target.checked;
+        document.getElementById('voiceclone-stream-toggle').checked = e.target.checked;
+    });
+
+    // 应用默认流式到各面板
+    if (savedStream) {
+        document.getElementById('preset-stream-toggle').checked = true;
+        document.getElementById('voicedesign-stream-toggle').checked = true;
+        document.getElementById('voiceclone-stream-toggle').checked = true;
     }
 }
 
@@ -409,6 +497,7 @@ async function handlePresetSynthesis() {
     }
 
     UI.setBtnLoading(btn, true);
+    State.preset.lastParams = params;
     const startTime = performance.now();
 
     try {
@@ -494,25 +583,25 @@ function initVoiceDesignPanel() {
 
     // 渲染标签
     renderVDStyleTags();
-    UI.renderAudioTags('vd-audio-tags', State.audioTags, (tag) => {
+    UI.renderAudioTags('voicedesign-audio-tags', State.audioTags, (tag) => {
         const ta = document.getElementById('voicedesign-tagged-text');
         UI.insertAtCursor(ta, `[${tag}]`);
     });
 
     // 字数统计
-    UI.bindCharCount('voicedesign-tagged-text', 'vd-text-count');
+    UI.bindCharCount('voicedesign-tagged-text', 'voicedesign-text-count');
 
     // 波形
-    State.voicedesign.waveform = new WaveformRenderer(document.getElementById('vd-waveform'));
+    State.voicedesign.waveform = new WaveformRenderer(document.getElementById('voicedesign-waveform'));
 
     // 合成
-    document.getElementById('vd-synthesize-btn').addEventListener('click', () => handleVDSynthesis());
+    document.getElementById('voicedesign-synthesize-btn').addEventListener('click', () => handleVDSynthesis());
 
     // 播放控制
     initPlayerControls('voicedesign', State.voicedesign);
 
     // 下载
-    document.getElementById('vd-download-btn').addEventListener('click', () => {
+    document.getElementById('voicedesign-download-btn').addEventListener('click', () => {
         if (State.voicedesign.lastBlob) Utils.downloadBlob(State.voicedesign.lastBlob, 'voicedesign_audio.wav');
     });
 
@@ -520,16 +609,16 @@ function initVoiceDesignPanel() {
     initBatchMode('voicedesign');
 
     // 参数摘要
-    document.getElementById('vd-copy-params').addEventListener('click', () => copyParams('voicedesign'));
-    document.getElementById('vd-resynthesize').addEventListener('click', () => resynthesize('voicedesign'));
+    document.getElementById('voicedesign-copy-params').addEventListener('click', () => copyParams('voicedesign'));
+    document.getElementById('voicedesign-resynthesize').addEventListener('click', () => resynthesize('voicedesign'));
 }
 
 function renderVDStyleTags() {
-    UI.renderStyleTags('vd-style-tags', State.styleTags, State.selectedVDStyleTags, (tag) => {
+    UI.renderStyleTags('voicedesign-style-tags', State.styleTags, State.selectedVDStyleTags, (tag) => {
         if (State.selectedVDStyleTags.has(tag)) State.selectedVDStyleTags.delete(tag);
         else State.selectedVDStyleTags.add(tag);
         renderVDStyleTags();
-        UI.updateTagsPreview('vd-tags-preview', State.selectedVDStyleTags);
+        UI.updateTagsPreview('voicedesign-tags-preview', State.selectedVDStyleTags);
     });
 }
 
@@ -537,9 +626,9 @@ async function handleVDSynthesis() {
     const apiKey = API.getApiKey();
     if (!apiKey) { UI.toast('请先输入 API Key', 'error'); document.getElementById('api-key-modal').classList.remove('hidden'); return; }
 
-    const isBatch = document.getElementById('vd-batch-toggle').checked;
-    const isStream = document.getElementById('vd-stream-toggle').checked;
-    const btn = document.getElementById('vd-synthesize-btn');
+    const isBatch = document.getElementById('voicedesign-batch-toggle').checked;
+    const isStream = document.getElementById('voicedesign-stream-toggle').checked;
+    const btn = document.getElementById('voicedesign-synthesize-btn');
 
     if (isBatch) { await handleBatchSynthesis('voicedesign'); return; }
 
@@ -547,6 +636,7 @@ async function handleVDSynthesis() {
     if (!params.text) { UI.toast('请输入合成文本', 'error'); return; }
 
     UI.setBtnLoading(btn, true);
+    State.voicedesign.lastParams = params;
     const startTime = performance.now();
 
     try {
@@ -611,27 +701,27 @@ function initVoiceClonePanel() {
 
     // 渲染标签
     renderVCStyleTags();
-    UI.renderAudioTags('vc-audio-tags', State.audioTags, (tag) => {
+    UI.renderAudioTags('voiceclone-audio-tags', State.audioTags, (tag) => {
         const ta = document.getElementById('voiceclone-tagged-text');
         UI.insertAtCursor(ta, `[${tag}]`);
     });
 
     // 字数统计
-    UI.bindCharCount('voiceclone-tagged-text', 'vc-text-count');
+    UI.bindCharCount('voiceclone-tagged-text', 'voiceclone-text-count');
 
     // 波形
-    State.voiceclone.waveform = new WaveformRenderer(document.getElementById('vc-waveform'));
+    State.voiceclone.waveform = new WaveformRenderer(document.getElementById('voiceclone-waveform'));
     // 预览波形（小）
     State.voiceclone.previewWaveform = new WaveformRenderer(document.getElementById('voiceclone-preview-waveform'));
 
     // 合成
-    document.getElementById('vc-synthesize-btn').addEventListener('click', () => handleVCSynthesis());
+    document.getElementById('voiceclone-synthesize-btn').addEventListener('click', () => handleVCSynthesis());
 
     // 播放控制
     initPlayerControls('voiceclone', State.voiceclone);
 
     // 下载
-    document.getElementById('vc-download-btn').addEventListener('click', () => {
+    document.getElementById('voiceclone-download-btn').addEventListener('click', () => {
         if (State.voiceclone.lastBlob) Utils.downloadBlob(State.voiceclone.lastBlob, 'voiceclone_audio.wav');
     });
 
@@ -639,8 +729,8 @@ function initVoiceClonePanel() {
     initBatchMode('voiceclone');
 
     // 参数摘要
-    document.getElementById('vc-copy-params').addEventListener('click', () => copyParams('voiceclone'));
-    document.getElementById('vc-resynthesize').addEventListener('click', () => resynthesize('voiceclone'));
+    document.getElementById('voiceclone-copy-params').addEventListener('click', () => copyParams('voiceclone'));
+    document.getElementById('voiceclone-resynthesize').addEventListener('click', () => resynthesize('voiceclone'));
 }
 
 async function handleCloneFile(file) {
@@ -677,11 +767,11 @@ async function handleCloneFile(file) {
 }
 
 function renderVCStyleTags() {
-    UI.renderStyleTags('vc-style-tags', State.styleTags, State.selectedVCStyleTags, (tag) => {
+    UI.renderStyleTags('voiceclone-style-tags', State.styleTags, State.selectedVCStyleTags, (tag) => {
         if (State.selectedVCStyleTags.has(tag)) State.selectedVCStyleTags.delete(tag);
         else State.selectedVCStyleTags.add(tag);
         renderVCStyleTags();
-        UI.updateTagsPreview('vc-tags-preview', State.selectedVCStyleTags);
+        UI.updateTagsPreview('voiceclone-tags-preview', State.selectedVCStyleTags);
     });
 }
 
@@ -694,9 +784,9 @@ async function handleVCSynthesis() {
         return;
     }
 
-    const isBatch = document.getElementById('vc-batch-toggle').checked;
-    const isStream = document.getElementById('vc-stream-toggle').checked;
-    const btn = document.getElementById('vc-synthesize-btn');
+    const isBatch = document.getElementById('voiceclone-batch-toggle').checked;
+    const isStream = document.getElementById('voiceclone-stream-toggle').checked;
+    const btn = document.getElementById('voiceclone-synthesize-btn');
 
     if (isBatch) { await handleBatchSynthesis('voiceclone'); return; }
 
@@ -704,6 +794,7 @@ async function handleVCSynthesis() {
     if (!params.text) { UI.toast('请输入合成文本', 'error'); return; }
 
     UI.setBtnLoading(btn, true);
+    State.voiceclone.lastParams = params;
     const startTime = performance.now();
 
     try {
