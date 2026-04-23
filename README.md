@@ -180,7 +180,48 @@ docker run -d \
 
 ---
 
-### 方式四：生产环境部署（Nginx 反向代理 + HTTPS）
+### 方式四：GitHub Actions 自动构建 + 服务器拉取部署（推荐团队/生产）
+
+项目已配置 GitHub Actions CI/CD 流水线，推送到 `main` 分支后自动构建 Docker 镜像并推送到 GitHub Container Registry (GHCR)。
+
+**服务器部署只需两步：**
+
+```bash
+# 1. 登录 GitHub Container Registry
+echo "你的GitHub_TOKEN" | docker login ghcr.io -u 你的用户名 --password-stdin
+
+# 2. 拉取镜像并启动
+docker compose up -d
+```
+
+首次会自动拉取镜像，后续更新：
+
+```bash
+# 拉取最新镜像
+docker compose pull
+
+# 重启服务
+docker compose up -d
+```
+
+**镜像标签说明：**
+
+| 标签 | 来源 | 说明 |
+|------|------|------|
+| `latest` | main 分支推送 | 最新稳定版 |
+| `1.0.0` | v1.0.0 tag | 语义化版本 |
+| `1.0` | v1.0.0 tag | 主版本.次版本 |
+| `sha-abc1234` | 每次提交 | 精确到 commit |
+
+**CI/CD 流程：**
+
+```
+代码推送 → GitHub Actions 触发 → 构建 Docker 镜像 → 推送至 GHCR → 服务器 docker pull
+```
+
+流水线支持 `linux/amd64` 和 `linux/arm64` 双架构，兼容主流云服务器。
+
+### 方式五：Nginx 反向代理 + HTTPS（公网部署）
 
 适用于需要公网访问的场景。
 

@@ -2,7 +2,12 @@ version: "3.8"
 
 services:
   mimo-tts-web:
-    build: .
+    # ─── 方式一：从 GitHub Container Registry 拉取预构建镜像（推荐） ───
+    image: ghcr.io/bmbxwbh/mimo-tts-web:latest
+
+    # ─── 方式二：本地构建（取消注释下面两行，注释上面的 image 行） ───
+    # build: .
+
     ports:
       - "${PORT:-26645}:26645"
     environment:
