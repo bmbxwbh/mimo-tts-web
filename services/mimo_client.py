@@ -15,12 +15,25 @@ from config import MIMO_API_BASE_URL, MIMO_API_ENDPOINT
 
 
 class MiMoClient:
-    """MiMo API 客户端"""
+    """MiMo API 客户端（共享连接池）"""
 
     def __init__(self):
         self.base_url = MIMO_API_BASE_URL
         self.endpoint = MIMO_API_ENDPOINT
         self.timeout = httpx.Timeout(120.0, connect=30.0)
+        self._client: Optional[httpx.AsyncClient] = None
+
+    def _get_client(self) -> httpx.AsyncClient:
+        """获取或创建共享的 httpx 客户端"""
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=self.timeout)
+        return self._client
+
+    async def close(self):
+        """关闭共享客户端（应用关闭时调用）"""
+        if self._client and not self._client.is_closed:
+            await self._client.aclose()
+            self._client = None
 
     async def synthesize_nonstream(
         self,
@@ -56,17 +69,16 @@ class MiMoClient:
         }
 
         start_time = time.monotonic()
+        client = self._get_client()
+        resp = await client.post(url, headers=headers, json=payload)
+        duration = time.monotonic() - start_time
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            resp = await client.post(url, headers=headers, json=payload)
-            duration = time.monotonic() - start_time
+        if resp.status_code != 200:
+            error_msg = self._parse_error(resp)
+            raise Exception(f"API 错误 ({resp.status_code}): {error_msg}")
 
-            if resp.status_code != 200:
-                error_msg = self._parse_error(resp)
-                raise Exception(f"API 错误 ({resp.status_code}): {error_msg}")
-
-            data = resp.json()
-            return self._extract_audio(data), duration
+        data = resp.json()
+        return self._extract_audio(data), duration
 
     async def synthesize_stream(
         self,
@@ -96,26 +108,26 @@ class MiMoClient:
             "stream": True,
         }
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            async with client.stream("POST", url, headers=headers, json=payload) as resp:
-                if resp.status_code != 200:
-                    body = await resp.aread()
-                    raise Exception(f"API 流式错误 ({resp.status_code}): {body.decode('utf-8', errors='replace')}")
+        client = self._get_client()
+        async with client.stream("POST", url, headers=headers, json=payload) as resp:
+            if resp.status_code != 200:
+                body = await resp.aread()
+                raise Exception(f"API 流式错误 ({resp.status_code}): {body.decode('utf-8', errors='replace')}")
 
-                async for line in resp.aiter_lines():
-                    if not line:
+            async for line in resp.aiter_lines():
+                if not line:
+                    continue
+                if line.startswith("data: "):
+                    data_str = line[6:]
+                    if data_str.strip() == "[DONE]":
+                        return
+                    try:
+                        chunk_data = json.loads(data_str)
+                        audio_data = self._extract_stream_chunk(chunk_data)
+                        if audio_data:
+                            yield audio_data
+                    except json.JSONDecodeError:
                         continue
-                    if line.startswith("data: "):
-                        data_str = line[6:]
-                        if data_str.strip() == "[DONE]":
-                            return
-                        try:
-                            chunk_data = json.loads(data_str)
-                            audio_data = self._extract_stream_chunk(chunk_data)
-                            if audio_data:
-                                yield audio_data
-                        except json.JSONDecodeError:
-                            continue
 
     def _extract_audio(self, data: dict) -> bytes:
         """从非流式响应中提取音频字节"""
@@ -177,15 +189,15 @@ class MiMoClient:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                if resp.status_code == 200:
-                    return True, "连接成功"
-                elif resp.status_code == 401:
-                    return False, "API Key 无效或已过期"
-                else:
-                    error_msg = self._parse_error(resp)
-                    return False, f"API 错误 ({resp.status_code}): {error_msg}"
+            client = self._get_client()
+            resp = await client.post(url, headers=headers, json=payload)
+            if resp.status_code == 200:
+                return True, "连接成功"
+            elif resp.status_code == 401:
+                return False, "API Key 无效或已过期"
+            else:
+                error_msg = self._parse_error(resp)
+                return False, f"API 错误 ({resp.status_code}): {error_msg}"
         except httpx.TimeoutException:
             return False, "连接超时，请检查网络"
         except httpx.ConnectError:

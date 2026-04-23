@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from routers import health, synthesize
+from services.mimo_client import mimo_client
 from config import SERVER_HOST, SERVER_PORT
 
 
@@ -23,6 +24,7 @@ async def lifespan(app: FastAPI):
     print(f"  http://{SERVER_HOST}:{SERVER_PORT}")
     print("=" * 50)
     yield
+    await mimo_client.close()
     print("Shutting down...")
 
 
