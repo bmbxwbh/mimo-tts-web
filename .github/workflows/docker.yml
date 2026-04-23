@@ -119,17 +119,17 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          TAG=${{ needs.auto-tag.outputs.new_tag }}
           PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | sed -n '2p')
           if [ -z "$PREV_TAG" ]; then
-            echo "changes<<EOF" >> $GITHUB_OUTPUT
-            git log --pretty=format:"- %s (%h)" HEAD | head -20 >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s (%h)" HEAD | head -20 > changes.txt
           else
-            echo "changes<<EOF" >> $GITHUB_OUTPUT
-            git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD > changes.txt
           fi
+          {
+            echo "changes<<ENDCHANGELOG"
+            cat changes.txt
+            echo "ENDCHANGELOG"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -181,14 +181,15 @@ jobs:
         run: |
           PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | sed -n '2p')
           if [ -z "$PREV_TAG" ]; then
-            echo "changes<<EOF" >> $GITHUB_OUTPUT
-            git log --pretty=format:"- %s (%h)" HEAD | head -20 >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s (%h)" HEAD | head -20 > changes.txt
           else
-            echo "changes<<EOF" >> $GITHUB_OUTPUT
-            git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD > changes.txt
           fi
+          {
+            echo "changes<<ENDCHANGELOG"
+            cat changes.txt
+            echo "ENDCHANGELOG"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
