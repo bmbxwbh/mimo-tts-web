@@ -61,10 +61,51 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-  # ─── Job 2: 自动创建 GitHub Release（仅 tag 推送时触发）───
-  release:
+  # ─── Job 2: main 分支推送时自动打 tag ───
+  auto-tag:
     needs: build-and-push
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    outputs:
+      new_tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Auto bump version
+        id: version
+        run: |
+          LATEST_TAG=$(git tag --sort=-v:refname | grep '^v' | head -1)
+          if [ -z "$LATEST_TAG" ]; then
+            NEW_TAG="v1.0.0"
+          else
+            VER=${LATEST_TAG#v}
+            MAJOR=$(echo $VER | cut -d. -f1)
+            MINOR=$(echo $VER | cut -d. -f2)
+            PATCH=$(echo $VER | cut -d. -f3)
+            NEW_PATCH=$((PATCH + 1))
+            NEW_TAG="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+          fi
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "📌 New tag: $NEW_TAG"
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin ${{ steps.version.outputs.tag }}
+
+  # ─── Job 3: 自动创建 GitHub Release ───
+  release:
+    needs: [build-and-push, auto-tag]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -78,8 +119,8 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          # 获取上一个 tag
-          PREV_TAG=$(git tag --sort=-v:refname | head -2 | tail -1)
+          TAG=${{ needs.auto-tag.outputs.new_tag }}
+          PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | sed -n '2p')
           if [ -z "$PREV_TAG" ]; then
             echo "changes<<EOF" >> $GITHUB_OUTPUT
             git log --pretty=format:"- %s (%h)" HEAD | head -20 >> $GITHUB_OUTPUT
@@ -93,10 +134,10 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          tag_name: ${{ needs.auto-tag.outputs.new_tag }}
+          name: ${{ needs.auto-tag.outputs.new_tag }}
           body: |
-            ## 🚀 MiMo TTS Web ${{ github.ref_name }}
+            ## 🚀 MiMo TTS Web ${{ needs.auto-tag.outputs.new_tag }}
 
             ### 📦 Docker 镜像
 
@@ -124,10 +165,10 @@ jobs:
           draft: false
           prerelease: false
 
-  # ─── Job 3: main 分支推送时自动打 tag ───
-  auto-tag:
+  # ─── Job 4: 手动 tag 推送时也创建 Release ───
+  release-tag:
     needs: build-and-push
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -138,28 +179,39 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Auto bump version
-        id: version
+      - name: Generate changelog
+        id: changelog
         run: |
-          # 获取最新 tag，自动递增 patch 版本
-          LATEST_TAG=$(git tag --sort=-v:refname | grep '^v' | head -1)
-          if [ -z "$LATEST_TAG" ]; then
-            NEW_TAG="v1.0.0"
+          PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            echo "changes<<EOF" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s (%h)" HEAD | head -20 >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           else
-            # 去掉 v 前缀，拆分版本号
-            VER=${LATEST_TAG#v}
-            MAJOR=$(echo $VER | cut -d. -f1)
-            MINOR=$(echo $VER | cut -d. -f2)
-            PATCH=$(echo $VER | cut -d. -f3)
-            NEW_PATCH=$((PATCH + 1))
-            NEW_TAG="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+            echo "changes<<EOF" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           fi
-          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
-          echo "📌 New tag: $NEW_TAG"
 
-      - name: Create and push tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
-          git push origin ${{ steps.version.outputs.tag }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: |
+            ## 🚀 MiMo TTS Web ${{ github.ref_name }}
+
+            ### 📦 Docker 镜像
+
+            ```bash
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}
+            docker compose up -d
+            ```
+
+            **多架构支持：** `linux/amd64` + `linux/arm64`
+
+            ### 📝 更新内容
+
+            ${{ steps.changelog.outputs.changes }}
+          draft: false
+          prerelease: false
