@@ -120,45 +120,42 @@ jobs:
         id: changelog
         run: |
           PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | sed -n '2p')
-          if [ -z "$PREV_TAG" ]; then
-            git log --pretty=format:"- %s (%h)" HEAD | head -20 > changes.txt
-          else
-            git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD > changes.txt
-          fi
           {
-            echo "changes<<ENDCHANGELOG"
-            cat changes.txt
-            echo "ENDCHANGELOG"
-          } >> "$GITHUB_OUTPUT"
+            echo "## 🚀 MiMo TTS Web ${{ needs.auto-tag.outputs.new_tag }}"
+            echo ""
+            echo "### 📦 Docker 镜像"
+            echo ""
+            echo '```bash'
+            echo "# 拉取镜像"
+            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}"
+            echo ""
+            echo "# 启动服务"
+            echo "docker compose up -d"
+            echo '```'
+            echo ""
+            echo "**多架构支持：** \`linux/amd64\` + \`linux/arm64\`"
+            echo ""
+            echo "### 📝 更新内容"
+            echo ""
+            if [ -z "$PREV_TAG" ]; then
+              git log --pretty=format:"- %s (%h)" HEAD | head -20
+            else
+              git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD
+            fi
+            echo ""
+            echo ""
+            echo "### 🔗 镜像信息"
+            echo ""
+            echo "- 镜像：\`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}\`"
+            echo "- Digest：\`${{ needs.build-and-push.outputs.digest }}\`"
+          } > release-body.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.auto-tag.outputs.new_tag }}
           name: ${{ needs.auto-tag.outputs.new_tag }}
-          body: |
-            ## 🚀 MiMo TTS Web ${{ needs.auto-tag.outputs.new_tag }}
-
-            ### 📦 Docker 镜像
-
-            ```bash
-            # 拉取镜像
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}
-
-            # 启动服务
-            docker compose up -d
-            ```
-
-            **多架构支持：** `linux/amd64` + `linux/arm64`
-
-            ### 📝 更新内容
-
-            ${{ steps.changelog.outputs.changes }}
-
-            ### 🔗 镜像信息
-
-            - 镜像：`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}`
-            - Digest：`${{ needs.build-and-push.outputs.digest }}`
+          body_path: release-body.md
           draft: false
           prerelease: false
 
@@ -177,39 +174,34 @@ jobs:
           fetch-depth: 0
 
       - name: Generate changelog
-        id: changelog
         run: |
           PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | sed -n '2p')
-          if [ -z "$PREV_TAG" ]; then
-            git log --pretty=format:"- %s (%h)" HEAD | head -20 > changes.txt
-          else
-            git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD > changes.txt
-          fi
           {
-            echo "changes<<ENDCHANGELOG"
-            cat changes.txt
-            echo "ENDCHANGELOG"
-          } >> "$GITHUB_OUTPUT"
+            echo "## 🚀 MiMo TTS Web ${{ github.ref_name }}"
+            echo ""
+            echo "### 📦 Docker 镜像"
+            echo ""
+            echo '```bash'
+            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}"
+            echo "docker compose up -d"
+            echo '```'
+            echo ""
+            echo "**多架构支持：** \`linux/amd64\` + \`linux/arm64\`"
+            echo ""
+            echo "### 📝 更新内容"
+            echo ""
+            if [ -z "$PREV_TAG" ]; then
+              git log --pretty=format:"- %s (%h)" HEAD | head -20
+            else
+              git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD
+            fi
+          } > release-body.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          body: |
-            ## 🚀 MiMo TTS Web ${{ github.ref_name }}
-
-            ### 📦 Docker 镜像
-
-            ```bash
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.version }}
-            docker compose up -d
-            ```
-
-            **多架构支持：** `linux/amd64` + `linux/arm64`
-
-            ### 📝 更新内容
-
-            ${{ steps.changelog.outputs.changes }}
+          body_path: release-body.md
           draft: false
           prerelease: false
