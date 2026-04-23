@@ -269,15 +269,18 @@ class WaveformRenderer {
         if (!peaks || !peaks.length) return;
 
         const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        canvas.style.width = rect.width + 'px';
-        canvas.style.height = rect.height + 'px';
+        // 只读取父元素宽度，高度用 CSS 计算值（避免 ResizeObserver 反馈循环）
+        const parentWidth = canvas.parentElement.getBoundingClientRect().width;
+        const computedStyle = getComputedStyle(canvas);
+        const cssHeight = parseFloat(computedStyle.height) || 80;
+        canvas.width = parentWidth * dpr;
+        canvas.height = cssHeight * dpr;
+        canvas.style.width = parentWidth + 'px';
+        // 不覆盖 style.height，让 CSS 控制
         ctx.scale(dpr, dpr);
 
-        const w = rect.width;
-        const h = rect.height;
+        const w = parentWidth;
+        const h = cssHeight;
         const barW = w / peaks.length;
         const midY = h / 2;
 
