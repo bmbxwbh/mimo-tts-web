@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  mimo-tts-web:
+    build: .
+    ports:
+      - "${PORT:-26645}:26645"
+    environment:
+      - PORT=26645
+      - WORKERS=${WORKERS:-1}
+    restart: unless-stopped

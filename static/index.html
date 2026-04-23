@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiMo TTS — 语音合成工作台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- Toast 通知容器 -->
+<div id="toast-container"></div>
+
+<!-- 移动端底部导航 -->
+<nav id="mobile-nav" class="mobile-nav">
+    <button class="mobile-nav-item active" data-tab="preset">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        <span>预置音色</span>
+    </button>
+    <button class="mobile-nav-item" data-tab="voicedesign">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        <span>音色设计</span>
+    </button>
+    <button class="mobile-nav-item" data-tab="voiceclone">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+        <span>音色复刻</span>
+    </button>
+</nav>
+
+<!-- 主布局 -->
+<div class="app-layout">
+
+    <!-- 侧边栏 -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-inner">
+            <div class="sidebar-logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 32 32" width="28" height="28">
+                        <defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#818cf8"/><stop offset="100%" style="stop-color:#6366f1"/></linearGradient></defs>
+                        <circle cx="16" cy="16" r="14" fill="url(#logo-grad)"/>
+                        <path d="M10 20V12a6 6 0 0 1 12 0v8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="16" cy="22" r="2" fill="#fff"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-title">MiMo TTS</span>
+                    <span class="logo-subtitle">语音合成工作台</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="preset">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    <span>预置音色合成</span>
+                </button>
+                <button class="nav-item" data-tab="voicedesign">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    <span>音色设计</span>
+                </button>
+                <button class="nav-item" data-tab="voiceclone">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                    <span>音色复刻</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-divider"></div>
+                <div class="settings-section">
+                    <div class="settings-label">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span>API Key</span>
+                    </div>
+                    <div class="api-key-input-wrap">
+                        <input type="password" id="api-key-input" class="api-key-input" placeholder="输入你的 MiMo API Key" autocomplete="off">
+                        <button id="toggle-key-visibility" class="btn-icon" title="显示/隐藏">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                    <button id="test-connection-btn" class="btn btn-secondary btn-sm btn-full">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        测试连接
+                    </button>
+                    <div id="connection-status" class="connection-status"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <button id="sidebar-toggle" class="sidebar-toggle" title="收起侧边栏">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+
+    <!-- 工作区 -->
+    <main class="workspace">
+
+        <!-- ====== Tab: 预置音色合成 ====== -->
+        <section id="panel-preset" class="panel active">
+            <div class="panel-header">
+                <h1 class="panel-title">预置音色合成</h1>
+                <p class="panel-desc">选择音色、控制风格，一句话生成自然语音</p>
+            </div>
+
+            <!-- 音色选择器 -->
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    选择音色
+                </div>
+                <div id="voice-grid" class="voice-grid"></div>
+            </div>
+
+            <!-- 风格控制区 -->
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    风格控制
+                </div>
+
+                <div class="sub-tabs">
+                    <button class="sub-tab active" data-subtab="natural-lang">自然语言</button>
+                    <button class="sub-tab" data-subtab="audio-tags">音频标签</button>
+                    <div class="sub-tab-indicator"></div>
+                </div>
+
+                <!-- 自然语言 Tab -->
+                <div id="preset-natural-lang" class="sub-panel active">
+                    <textarea id="preset-style-prompt" class="textarea" rows="3"
+                        placeholder="描述你想要的语音风格，例如：用轻快上扬的语调，带着查到成绩后压抑不住的激动与小骄傲"></textarea>
+                    <div class="char-count"><span id="preset-style-count">0</span> 字</div>
+
+                    <!-- 导演模式 -->
+                    <div class="toggle-row">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="preset-director-toggle" class="toggle-input">
+                            <span class="toggle-switch"></span>
+                            <span>导演模式</span>
+                        </label>
+                        <span class="toggle-hint">从角色、场景、指导三维度精细控制</span>
+                    </div>
+                    <div id="preset-director-fields" class="director-fields hidden">
+                        <div class="director-field">
+                            <label>角色</label>
+                            <textarea id="director-character" class="textarea" rows="2" placeholder="人物身份、性格、气质与说话习惯"></textarea>
+                        </div>
+                        <div class="director-field">
+                            <label>场景</label>
+                            <textarea id="director-scene" class="textarea" rows="2" placeholder="此刻发生了什么、和谁说话、情绪状态"></textarea>
+                        </div>
+                        <div class="director-field">
+                            <label>指导</label>
+                            <textarea id="director-direction" class="textarea" rows="3" placeholder="语速、气息、停顿、重音、共鸣位置、情绪起伏"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 音频标签 Tab -->
+                <div id="preset-audio-tags" class="sub-panel">
+                    <div class="tags-section">
+                        <div class="tags-label">风格标签 <span class="tags-hint">（点击选择，可多选）</span></div>
+                        <div id="style-tags-container" class="tags-container"></div>
+                    </div>
+                    <div id="tags-preview" class="tags-preview hidden">
+                        <span class="tags-preview-label">前缀：</span>
+                        <code id="tags-preview-text"></code>
+                    </div>
+                    <textarea id="preset-tagged-text" class="textarea" rows="4" placeholder="输入要合成的文本"></textarea>
+                    <div class="tags-section">
+                        <div class="tags-label">插入音频标签 <span class="tags-hint">（点击在光标位置插入）</span></div>
+                        <div id="audio-tags-container" class="tags-container compact"></div>
+                    </div>
+                </div>
+
+                <!-- 唱歌模式 -->
+                <div class="toggle-row" style="margin-top: 12px;">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="preset-singing-toggle" class="toggle-input">
+                        <span class="toggle-switch"></span>
+                        <span>唱歌模式</span>
+                    </label>
+                    <span class="toggle-hint">自动添加 (唱歌) 前缀</span>
+                </div>
+            </div>
+
+            <!-- 合成文本 + 输出 -->
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    合成文本
+                </div>
+
+                <!-- 批量模式开关 -->
+                <div class="toggle-row" style="margin-top: 0; margin-bottom: 12px;">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="preset-batch-toggle" class="toggle-input batch-toggle" data-panel="preset">
+                        <span class="toggle-switch"></span>
+                        <span>批量模式</span>
+                    </label>
+                    <span class="toggle-hint">每行一段文本，逐段合成</span>
+                </div>
+
+                <textarea id="preset-text" class="textarea textarea-lg" rows="5" placeholder="输入要合成的文本内容……"></textarea>
+                <div class="char-count"><span id="preset-text-count">0</span> 字</div>
+
+                <!-- 批量进度 -->
+                <div id="preset-batch-progress" class="batch-progress hidden">
+                    <div class="batch-info">
+                        <span id="preset-batch-count">共 0 段</span>
+                        <span id="preset-batch-status"></span>
+                    </div>
+                    <div class="batch-bar">
+                        <div id="preset-batch-fill" class="batch-bar-fill"></div>
+                    </div>
+                    <label class="toggle-label compact" style="margin-top: 8px;">
+                        <input type="checkbox" id="preset-batch-autoplay" class="toggle-input" checked>
+                        <span class="toggle-switch"></span>
+                        <span>每段合成后自动播放</span>
+                    </label>
+                </div>
+
+                <div class="action-row">
+                    <div class="stream-toggle">
+                        <label class="toggle-label compact">
+                            <input type="checkbox" id="preset-stream-toggle" class="toggle-input">
+                            <span class="toggle-switch"></span>
+                            <span>流式输出</span>
+                        </label>
+                    </div>
+                    <button id="preset-synthesize-btn" class="btn btn-primary btn-lg">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <span class="btn-text">开始合成</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 输出区 -->
+            <div id="preset-output" class="card output-card hidden">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    合成结果
+                    <span id="preset-duration" class="duration-badge"></span>
+                </div>
+                <canvas id="preset-waveform" class="waveform-canvas"></canvas>
+                <div class="player-controls">
+                    <button id="preset-play-btn" class="btn-icon play-btn">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </button>
+                    <div class="progress-wrap">
+                        <span id="preset-current-time" class="time-label">0:00</span>
+                        <div class="progress-bar" id="preset-progress-bar">
+                            <div class="progress-fill" id="preset-progress-fill"></div>
+                        </div>
+                        <span id="preset-total-time" class="time-label">0:00</span>
+                    </div>
+                    <div class="volume-wrap">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        <input type="range" id="preset-volume" class="volume-slider" min="0" max="1" step="0.05" value="1">
+                    </div>
+                    <button id="preset-download-btn" class="btn-icon" title="下载 WAV">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </button>
+                </div>
+
+                <!-- 参数摘要 -->
+                <div id="preset-param-summary" class="param-summary">
+                    <div class="param-summary-title">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        参数摘要
+                    </div>
+                    <div id="preset-param-rows" class="param-rows"></div>
+                    <div class="param-actions">
+                        <button id="preset-copy-params" class="btn btn-secondary btn-sm">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            复制为 JSON
+                        </button>
+                        <button id="preset-resynthesize" class="btn btn-secondary btn-sm">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            重新合成
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== Tab: 音色设计 ====== -->
+        <section id="panel-voicedesign" class="panel">
+            <div class="panel-header">
+                <h1 class="panel-title">音色设计</h1>
+                <p class="panel-desc">用文字描述你想要的音色，AI 即刻生成</p>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    音色描述
+                </div>
+                <textarea id="voicedesign-description" class="textarea" rows="3" placeholder="描述你想要的音色，例如：温柔甜美的年轻女性"></textarea>
+                <div class="template-chips">
+                    <span class="template-chips-label">快速填充：</span>
+                    <div id="voicedesign-templates" class="chips-row"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+                    风格控制（音频标签）
+                </div>
+                <div class="tags-section">
+                    <div class="tags-label">风格标签</div>
+                    <div id="vd-style-tags" class="tags-container"></div>
+                </div>
+                <div id="vd-tags-preview" class="tags-preview hidden">
+                    <span class="tags-preview-label">前缀：</span>
+                    <code id="vd-tags-preview-text"></code>
+                </div>
+
+                <!-- 批量模式 -->
+                <div class="toggle-row" style="margin-top: 0; margin-bottom: 12px;">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="vd-batch-toggle" class="toggle-input batch-toggle" data-panel="voicedesign">
+                        <span class="toggle-switch"></span>
+                        <span>批量模式</span>
+                    </label>
+                    <span class="toggle-hint">每行一段文本</span>
+                </div>
+
+                <textarea id="voicedesign-tagged-text" class="textarea" rows="3" placeholder="输入要合成的文本"></textarea>
+                <div class="char-count"><span id="vd-text-count">0</span> 字</div>
+
+                <div id="vd-batch-progress" class="batch-progress hidden">
+                    <div class="batch-info">
+                        <span id="vd-batch-count">共 0 段</span>
+                        <span id="vd-batch-status"></span>
+                    </div>
+                    <div class="batch-bar"><div id="vd-batch-fill" class="batch-bar-fill"></div></div>
+                    <label class="toggle-label compact" style="margin-top: 8px;">
+                        <input type="checkbox" id="vd-batch-autoplay" class="toggle-input" checked>
+                        <span class="toggle-switch"></span>
+                        <span>每段合成后自动播放</span>
+                    </label>
+                </div>
+
+                <div class="tags-section">
+                    <div class="tags-label">插入音频标签</div>
+                    <div id="vd-audio-tags" class="tags-container compact"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="action-row">
+                    <div class="stream-toggle">
+                        <label class="toggle-label compact">
+                            <input type="checkbox" id="vd-stream-toggle" class="toggle-input">
+                            <span class="toggle-switch"></span>
+                            <span>流式输出</span>
+                        </label>
+                    </div>
+                    <button id="vd-synthesize-btn" class="btn btn-primary btn-lg">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <span class="btn-text">开始合成</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="vd-output" class="card output-card hidden">
+                <div class="card-title">
+                    合成结果
+                    <span id="vd-duration" class="duration-badge"></span>
+                </div>
+                <canvas id="vd-waveform" class="waveform-canvas"></canvas>
+                <div class="player-controls">
+                    <button id="vd-play-btn" class="btn-icon play-btn">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </button>
+                    <div class="progress-wrap">
+                        <span id="vd-current-time" class="time-label">0:00</span>
+                        <div class="progress-bar" id="vd-progress-bar"><div class="progress-fill" id="vd-progress-fill"></div></div>
+                        <span id="vd-total-time" class="time-label">0:00</span>
+                    </div>
+                    <div class="volume-wrap">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        <input type="range" id="vd-volume" class="volume-slider" min="0" max="1" step="0.05" value="1">
+                    </div>
+                    <button id="vd-download-btn" class="btn-icon" title="下载 WAV">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </button>
+                </div>
+                <div id="vd-param-summary" class="param-summary">
+                    <div class="param-summary-title">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        参数摘要
+                    </div>
+                    <div id="vd-param-rows" class="param-rows"></div>
+                    <div class="param-actions">
+                        <button id="vd-copy-params" class="btn btn-secondary btn-sm">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            复制为 JSON
+                        </button>
+                        <button id="vd-resynthesize" class="btn btn-secondary btn-sm">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            重新合成
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== Tab: 音色复刻 ====== -->
+        <section id="panel-voiceclone" class="panel">
+            <div class="panel-header">
+                <h1 class="panel-title">音色复刻</h1>
+                <p class="panel-desc">上传音频样本，精准复刻目标音色</p>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    上传音频样本
+                </div>
+                <div id="voiceclone-dropzone" class="dropzone">
+                    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <p class="dropzone-text">拖拽音频文件到此处，或</p>
+                    <button id="voiceclone-file-btn" class="btn btn-secondary btn-sm">选择文件</button>
+                    <p class="dropzone-hint">支持 MP3、WAV 格式，Base64 后 ≤ 10MB</p>
+                    <input type="file" id="voiceclone-file-input" accept=".mp3,.wav,audio/mpeg,audio/wav" hidden>
+                </div>
+                <div id="voiceclone-file-info" class="file-info hidden">
+                    <div class="file-info-main">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        <div class="file-info-text">
+                            <span id="voiceclone-file-name" class="file-name"></span>
+                            <span id="voiceclone-file-meta" class="file-meta"></span>
+                        </div>
+                        <button id="voiceclone-remove-btn" class="btn-icon" title="移除">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    <canvas id="voiceclone-preview-waveform" class="waveform-canvas waveform-sm"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+                    风格控制（音频标签）
+                </div>
+                <div class="tags-section">
+                    <div class="tags-label">风格标签</div>
+                    <div id="vc-style-tags" class="tags-container"></div>
+                </div>
+                <div id="vc-tags-preview" class="tags-preview hidden">
+                    <span class="tags-preview-label">前缀：</span>
+                    <code id="vc-tags-preview-text"></code>
+                </div>
+
+                <!-- 批量模式 -->
+                <div class="toggle-row" style="margin-top: 0; margin-bottom: 12px;">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="vc-batch-toggle" class="toggle-input batch-toggle" data-panel="voiceclone">
+                        <span class="toggle-switch"></span>
+                        <span>批量模式</span>
+                    </label>
+                    <span class="toggle-hint">每行一段文本</span>
+                </div>
+
+                <textarea id="voiceclone-tagged-text" class="textarea" rows="3" placeholder="输入要合成的文本"></textarea>
+                <div class="char-count"><span id="vc-text-count">0</span> 字</div>
+
+                <div id="vc-batch-progress" class="batch-progress hidden">
+                    <div class="batch-info">
+                        <span id="vc-batch-count">共 0 段</span>
+                        <span id="vc-batch-status"></span>
+                    </div>
+                    <div class="batch-bar"><div id="vc-batch-fill" class="batch-bar-fill"></div></div>
+                    <label class="toggle-label compact" style="margin-top: 8px;">
+                        <input type="checkbox" id="vc-batch-autoplay" class="toggle-input" checked>
+                        <span class="toggle-switch"></span>
+                        <span>每段合成后自动播放</span>
+                    </label>
+                </div>
+
+                <div class="tags-section">
+                    <div class="tags-label">插入音频标签</div>
+                    <div id="vc-audio-tags" class="tags-container compact"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="action-row">
+                    <div class="stream-toggle">
+                        <label class="toggle-label compact">
+                            <input type="checkbox" id="vc-stream-toggle" class="toggle-input">
+                            <span class="toggle-switch"></span>
+                            <span>流式输出</span>
+                        </label>
+                    </div>
+                    <button id="vc-synthesize-btn" class="btn btn-primary btn-lg">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <span class="btn-text">开始合成</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="vc-output" class="card output-card hidden">
+                <div class="card-title">
+                    合成结果
+                    <span id="vc-duration" class="duration-badge"></span>
+                </div>
+                <canvas id="vc-waveform" class="waveform-canvas"></canvas>
+                <div class="player-controls">
+                    <button id="vc-play-btn" class="btn-icon play-btn">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </button>
+                    <div class="progress-wrap">
+                        <span id="vc-current-time" class="time-label">0:00</span>
+                        <div class="progress-bar" id="vc-progress-bar"><div class="progress-fill" id="vc-progress-fill"></div></div>
+                        <span id="vc-total-time" class="time-label">0:00</span>
+                    </div>
+                    <div class="volume-wrap">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        <input type="range" id="vc-volume" class="volume-slider" min="0" max="1" step="0.05" value="1">
+                    </div>
+                    <button id="vc-download-btn" class="btn-icon" title="下载 WAV">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </button>
+                </div>
+                <div id="vc-param-summary" class="param-summary">
+                    <div class="param-summary-title">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        参数摘要
+                    </div>
+                    <div id="vc-param-rows" class="param-rows"></div>
+                    <div class="param-actions">
+                        <button id="vc-copy-params" class="btn btn-secondary btn-sm">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            复制为 JSON
+                        </button>
+                        <button id="vc-resynthesize" class="btn btn-secondary btn-sm">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            重新合成
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== 历史记录面板 ====== -->
+        <section class="history-section">
+            <button id="history-toggle" class="history-toggle">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>合成历史</span>
+                <span id="history-count" class="history-count">0</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="history-chevron"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="history-panel" class="history-panel collapsed">
+                <div class="history-header">
+                    <span class="history-header-title">最近 50 条记录</span>
+                    <button id="history-clear" class="btn btn-secondary btn-sm">清空历史</button>
+                </div>
+                <div id="history-list" class="history-list">
+                    <div class="history-empty">暂无合成记录</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/audio.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/app.js"></script>
+
+</body>
+</html>
