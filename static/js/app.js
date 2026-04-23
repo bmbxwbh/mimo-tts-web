@@ -1320,16 +1320,59 @@ function reuseHistoryItem(id, records) {
         if (rec.params.style_prompt) {
             document.getElementById('preset-style-prompt').value = rec.params.style_prompt;
         }
-        if (rec.params.singing) {
-            document.getElementById('preset-singing-toggle').checked = true;
+        // 恢复导演模式
+        if (rec.params.director) {
+            document.getElementById('preset-director-toggle').checked = true;
+            document.getElementById('preset-director-fields').classList.remove('hidden');
+            document.getElementById('director-character').value = rec.params.director.character || '';
+            document.getElementById('director-scene').value = rec.params.director.scene || '';
+            document.getElementById('director-direction').value = rec.params.director.direction || '';
+        } else {
+            document.getElementById('preset-director-toggle').checked = false;
+            document.getElementById('preset-director-fields').classList.add('hidden');
+        }
+        // 恢复唱歌模式
+        document.getElementById('preset-singing-toggle').checked = !!rec.params.singing;
+        // 恢复音频标签
+        if (rec.params.audio_tags) {
+            const tags = rec.params.audio_tags.split(' ').filter(Boolean);
+            State.selectedStyleTags = new Set(tags);
+            renderPresetStyleTags();
+            UI.updateTagsPreview('tags-preview', State.selectedStyleTags);
+        } else {
+            State.selectedStyleTags = new Set();
+            renderPresetStyleTags();
+            UI.updateTagsPreview('tags-preview', State.selectedStyleTags);
         }
     } else if (rec.model === 'voicedesign' && rec.params) {
         document.getElementById('voicedesign-tagged-text').value = rec.params.text || '';
         if (rec.params.voice_description) {
             document.getElementById('voicedesign-description').value = rec.params.voice_description;
         }
+        // 恢复音频标签
+        if (rec.params.audio_tags) {
+            const tags = rec.params.audio_tags.split(' ').filter(Boolean);
+            State.selectedVDStyleTags = new Set(tags);
+            renderVDStyleTags();
+            UI.updateTagsPreview('voicedesign-tags-preview', State.selectedVDStyleTags);
+        } else {
+            State.selectedVDStyleTags = new Set();
+            renderVDStyleTags();
+            UI.updateTagsPreview('voicedesign-tags-preview', State.selectedVDStyleTags);
+        }
     } else if (rec.model === 'voiceclone' && rec.params) {
         document.getElementById('voiceclone-tagged-text').value = rec.params.text || '';
+        // 恢复音频标签
+        if (rec.params.audio_tags) {
+            const tags = rec.params.audio_tags.split(' ').filter(Boolean);
+            State.selectedVCStyleTags = new Set(tags);
+            renderVCStyleTags();
+            UI.updateTagsPreview('voiceclone-tags-preview', State.selectedVCStyleTags);
+        } else {
+            State.selectedVCStyleTags = new Set();
+            renderVCStyleTags();
+            UI.updateTagsPreview('voiceclone-tags-preview', State.selectedVCStyleTags);
+        }
     }
 
     UI.toast('参数已填充', 'success');

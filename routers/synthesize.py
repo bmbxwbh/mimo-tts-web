@@ -20,7 +20,6 @@ from schemas import (
     BatchResultItem, BatchResponse,
 )
 from services.mimo_client import mimo_client
-from services.audio_utils import pcm_to_wav, get_audio_duration
 
 router = APIRouter(prefix="/api", tags=["synthesize"])
 
