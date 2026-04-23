@@ -46,6 +46,7 @@
 - **流式输出**：WebSocket 实时推送 PCM 数据，边收边播
 - **波形可视化**：Web Audio API + Canvas 波形绘制，播放进度高亮
 - **暗色主题**：深色系设计，连贯动画，响应式适配桌面 / 平板 / 手机
+- **设置页面**：独立的设置面板，管理 API Key、默认参数、连接测试
 - **API Key 安全**：仅存浏览器 localStorage，不经过服务端持久化
 
 ---
@@ -54,35 +55,28 @@
 
 ```
 mimo-tts-web/
-├── main.py                          # FastAPI 入口，路由注册、CORS、静态文件
-├── config.py                        # 配置常量（端口、模型 ID、音色列表、标签等）
+├── main.py                          # FastAPI 入口
+├── config.py                        # 配置常量
 ├── schemas.py                       # Pydantic 请求/响应模型
 ├── requirements.txt                 # Python 依赖
 ├── Dockerfile                       # Docker 镜像定义
-├── docker-compose.yml               # Docker Compose 部署配置
-├── .github/
-│   └── workflows/
-│       └── docker.yml               # GitHub Actions CI/CD 流水线
+├── docker-compose.yml               # Docker Compose 配置
+├── .github/workflows/docker.yml     # CI/CD 流水线
 ├── routers/
-│   ├── __init__.py
-│   ├── health.py                    # 健康检查、连接测试、音色/标签列表 API
-│   └── synthesize.py                # 合成路由（单条 + 批量 + WebSocket 流式）
+│   ├── health.py                    # 健康检查、连接测试
+│   └── synthesize.py                # 合成路由（单条 + 批量 + WebSocket）
 ├── services/
-│   ├── __init__.py
-│   ├── mimo_client.py               # MiMo API 客户端封装（非流式 + 流式）
-│   └── audio_utils.py               # PCM→WAV 转换、音频时长计算
+│   ├── mimo_client.py               # MiMo API 客户端封装
+│   └── audio_utils.py               # PCM→WAV 转换
 └── static/
-    ├── index.html                   # 页面结构（三个功能 Tab + 历史面板）
-    ├── css/
-    │   └── style.css                # 暗色主题、动画、响应式样式
-    ├── js/
-    │   ├── app.js                   # 主入口，所有交互逻辑
-    │   ├── api.js                   # 后端 API + WebSocket 调用封装
-    │   ├── audio.js                 # AudioPlayer + WaveformRenderer
-    │   ├── ui.js                    # Toast 通知、标签渲染、参数摘要组件
-    │   └── utils.js                 # 工具函数（格式化、Base64、剪贴板）
-    └── assets/
-        └── previews/                # 9 个音色的试听 WAV 文件
+    ├── index.html                   # 页面结构
+    ├── css/style.css                # 样式
+    └── js/
+        ├── app.js                   # 主入口
+        ├── api.js                   # API 封装
+        ├── audio.js                 # 音频播放器
+        ├── ui.js                    # UI 组件
+        └── utils.js                 # 工具函数
 ```
 
 ---
@@ -96,8 +90,11 @@ mimo-tts-web/
 **环境要求：** Python 3.10+
 
 ```bash
-# 安装依赖
+# 克隆仓库
+git clone https://github.com/bmbxwbh/mimo-tts-web.git
 cd mimo-tts-web
+
+# 安装依赖
 pip install -r requirements.txt
 
 # 启动服务
@@ -108,18 +105,44 @@ python main.py
 
 ---
 
-### 方式二：Docker 一键部署（推荐）
+### 方式二：Docker 部署（推荐）
 
-**无需本地构建，直接拉取 GitHub Actions 自动构建的镜像。**
+无需安装 Python，无需克隆代码，一条命令即可运行。镜像由 GitHub Actions 自动构建，支持 `amd64` 和 `arm64` 两种架构。
 
-#### 环境要求
+---
 
-- Docker
+#### 📋 前置要求
 
-#### 快速启动（推荐）
+- 一台 Linux 服务器（Ubuntu / Debian / CentOS 均可）
+- 已安装 Docker（见下方安装说明）
+
+**安装 Docker（如未安装）：**
 
 ```bash
-# 一条命令搞定：拉取镜像 + 启动服务
+# Ubuntu / Debian
+curl -fsSL https://get.docker.com | sh
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# CentOS
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo yum install -y docker-ce docker-ce-cli containerd.io
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# 验证安装
+docker --version
+# 输出类似：Docker version 24.0.x
+```
+
+---
+
+#### 🚀 首次部署
+
+**一条命令，拉取镜像并启动：**
+
+```bash
 docker run -d \
   --name mimo-tts-web \
   -p 26645:26645 \
@@ -127,58 +150,249 @@ docker run -d \
   ghcr.io/bmbxwbh/mimo-tts-web:latest
 ```
 
-启动后会输出容器 ID，访问 **http://你的服务器IP:26645** 即可使用。
+**参数说明：**
 
-#### 使用 docker-compose（可选）
+| 参数 | 作用 |
+|------|------|
+| `-d` | 后台运行 |
+| `--name mimo-tts-web` | 容器命名为 mimo-tts-web |
+| `-p 26645:26645` | 将服务器的 26645 端口映射到容器的 26645 端口 |
+| `--restart unless-stopped` | 服务器重启后容器自动启动 |
+| `ghcr.io/bmbxwbh/mimo-tts-web:latest` | 使用的镜像（latest = 最新版） |
 
-如果习惯用 docker-compose，将以下内容保存为 `docker-compose.yml`：
+**验证是否启动成功：**
+
+```bash
+# 查看容器状态（应显示 Up 状态）
+docker ps | grep mimo-tts-web
+
+# 查看启动日志（应显示访问地址）
+docker logs mimo-tts-web
+```
+
+输出类似：
+```
+=========================================
+  MiMo-V2.5-TTS Web UI 已启动
+  访问地址: http://localhost:26645
+=========================================
+```
+
+打开浏览器访问 **http://你的服务器IP:26645** 即可使用。
+
+---
+
+#### 🔄 更新版本
+
+当项目发布新版本时，按以下步骤更新：
+
+```bash
+# 1. 拉取最新镜像
+docker pull ghcr.io/bmbxwbh/mimo-tts-web:latest
+
+# 2. 删除旧容器
+docker rm -f mimo-tts-web
+
+# 3. 用新镜像重新创建容器
+docker run -d \
+  --name mimo-tts-web \
+  -p 26645:26645 \
+  --restart unless-stopped \
+  ghcr.io/bmbxwbh/mimo-tts-web:latest
+```
+
+> **注意：** 更新会重建容器，但不会丢失数据。API Key 存在浏览器 localStorage 中，不受影响。
+
+**也可以用一行命令完成：**
+
+```bash
+docker pull ghcr.io/bmbxwbh/mimo-tts-web:latest && docker rm -f mimo-tts-web && docker run -d --name mimo-tts-web -p 26645:26645 --restart unless-stopped ghcr.io/bmbxwbh/mimo-tts-web:latest
+```
+
+---
+
+#### 🗑️ 完全卸载
+
+```bash
+# 1. 停止并删除容器
+docker stop mimo-tts-web
+docker rm mimo-tts-web
+
+# 2. 删除镜像（可选，释放磁盘空间）
+docker rmi ghcr.io/bmbxwbh/mimo-tts-web:latest
+
+# 3. 清理所有未使用的镜像（可选）
+docker image prune -a
+```
+
+---
+
+#### 📊 日常管理命令
+
+```bash
+# 查看运行状态
+docker ps | grep mimo-tts-web
+
+# 查看实时日志
+docker logs -f mimo-tts-web
+
+# 查看最近 100 行日志
+docker logs --tail 100 mimo-tts-web
+
+# 停止服务
+docker stop mimo-tts-web
+
+# 启动已停止的容器
+docker start mimo-tts-web
+
+# 重启服务
+docker restart mimo-tts-web
+
+# 进入容器内部（调试用）
+docker exec -it mimo-tts-web /bin/bash
+
+# 查看容器资源占用
+docker stats mimo-tts-web
+
+# 查看容器详细信息
+docker inspect mimo-tts-web
+```
+
+---
+
+#### 🔧 自定义配置
+
+**修改端口：**
+
+将服务映射到其他端口（如 8080）：
+
+```bash
+docker run -d \
+  --name mimo-tts-web \
+  -p 8080:26645 \
+  --restart unless-stopped \
+  ghcr.io/bmbxwbh/mimo-tts-web:latest
+```
+
+然后访问 **http://你的服务器IP:8080**
+
+**使用特定版本：**
+
+```bash
+docker run -d \
+  --name mimo-tts-web \
+  -p 26645:26645 \
+  --restart unless-stopped \
+  ghcr.io/bmbxwbh/mimo-tts-web:v1.0.3
+```
+
+**使用 Docker Compose：**
+
+如果习惯用 docker-compose，创建 `docker-compose.yml`：
 
 ```yaml
 version: "3.8"
 services:
   mimo-tts-web:
     image: ghcr.io/bmbxwbh/mimo-tts-web:latest
+    container_name: mimo-tts-web
     ports:
       - "26645:26645"
+    environment:
+      - PORT=26645
+      - WORKERS=1
     restart: unless-stopped
 ```
 
 然后执行：
 
 ```bash
+# 启动
 docker compose up -d
-```
 
-> 如果提示 `unauthorized`，说明镜像包尚未设为公开。
-> 前往 GitHub → Packages → mimo-tts-web → Package Settings → Change visibility → Public，
-> 或手动登录：`echo "YOUR_TOKEN" | docker login ghcr.io -u bmbxwbh --password-stdin`
+# 查看日志
+docker compose logs -f
 
-#### 日常更新
-
-```bash
-# docker run 方式
-docker pull ghcr.io/bmbxwbh/mimo-tts-web:latest
-docker rm -f mimo-tts-web
-docker run -d --name mimo-tts-web -p 26645:26645 --restart unless-stopped ghcr.io/bmbxwbh/mimo-tts-web:latest
-
-# docker-compose 方式
+# 更新
 docker compose pull && docker compose up -d
+
+# 停止
+docker compose down
+
+# 重启
+docker compose restart
 ```
 
-#### 常用命令
+---
+
+#### ❓ Docker 常见问题
+
+**Q: 提示 `unauthorized` 无法拉取镜像**
+
+镜像包可能尚未设为公开。前往 GitHub → Packages → mimo-tts-web → Package Settings → Change visibility → Public。或手动登录：
 
 ```bash
-# 查看运行日志
-docker logs -f mimo-tts-web
+echo "YOUR_GITHUB_TOKEN" | docker login ghcr.io -u bmbxwbh --password-stdin
+```
 
-# 停止服务
-docker stop mimo-tts-web
+**Q: 端口被占用**
 
-# 重启服务
-docker restart mimo-tts-web
+```bash
+# 查看谁占用了端口
+lsof -i :26645
+# 或
+ss -tlnp | grep 26645
 
-# 查看容器状态
-docker ps | grep mimo-tts-web
+# 换一个端口
+docker run -d --name mimo-tts-web -p 8080:26645 --restart unless-stopped ghcr.io/bmbxwbh/mimo-tts-web:latest
+```
+
+**Q: 容器启动后立即退出**
+
+```bash
+# 查看退出原因
+docker logs mimo-tts-web
+
+# 常见原因：端口冲突、镜像损坏
+# 解决：换端口 或 重新拉取镜像
+docker pull ghcr.io/bmbxwbh/mimo-tts-web:latest
+```
+
+**Q: 容器无法访问外部网络**
+
+检查服务器防火墙是否放行了出站流量。如果使用代理，需要配置环境变量：
+
+```bash
+docker run -d \
+  --name mimo-tts-web \
+  -p 26645:26645 \
+  -e HTTP_PROXY=http://proxy:port \
+  -e HTTPS_PROXY=http://proxy:port \
+  --restart unless-stopped \
+  ghcr.io/bmbxwbh/mimo-tts-web:latest
+```
+
+**Q: 如何回滚到旧版本**
+
+```bash
+# 1. 查看可用版本
+# 访问 https://github.com/bmbxwbh/mimo-tts-web/pkgs/container/mimo-tts-web
+
+# 2. 删除当前版本，运行旧版本
+docker rm -f mimo-tts-web
+docker run -d \
+  --name mimo-tts-web \
+  -p 26645:26645 \
+  --restart unless-stopped \
+  ghcr.io/bmbxwbh/mimo-tts-web:v1.0.0
+```
+
+**Q: 如何设置开机自启**
+
+`--restart unless-stopped` 参数已经实现了开机自启。如果 Docker 服务本身未设置开机自启：
+
+```bash
+sudo systemctl enable docker
 ```
 
 ---
@@ -190,30 +404,39 @@ docker ps | grep mimo-tts-web
 #### 1. 安装 Nginx
 
 ```bash
-# Ubuntu/Debian
+# Ubuntu / Debian
 sudo apt update && sudo apt install -y nginx
 
-# CentOS/RHEL
+# CentOS / RHEL
 sudo yum install -y nginx
 ```
 
 #### 2. 启动 MiMo TTS 服务
 
 ```bash
-cd mimo-tts-web
-docker compose up -d
+docker run -d \
+  --name mimo-tts-web \
+  -p 26645:26645 \
+  --restart unless-stopped \
+  ghcr.io/bmbxwbh/mimo-tts-web:latest
 ```
 
 #### 3. 配置 Nginx
 
-创建 `/etc/nginx/sites-available/mimo-tts`：
+创建配置文件：
+
+```bash
+sudo nano /etc/nginx/sites-available/mimo-tts
+```
+
+写入以下内容：
 
 ```nginx
 server {
     listen 80;
     server_name your-domain.com;  # 替换为你的域名
 
-    # 音色复刻需要上传音频文件
+    # 音色复刻需要上传音频文件，限制上传大小
     client_max_body_size 20M;
 
     location / {
@@ -258,14 +481,14 @@ sudo certbot renew --dry-run
 
 完成后访问 **https://your-domain.com**
 
-#### 5. 防火墙放行（如需）
+#### 5. 防火墙放行
 
 ```bash
-# Ubuntu/Debian (ufw)
+# Ubuntu / Debian (ufw)
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 
-# CentOS/RHEL (firewalld)
+# CentOS / RHEL (firewalld)
 sudo firewall-cmd --permanent --add-service=http
 sudo firewall-cmd --permanent --add-service=https
 sudo firewall-cmd --reload
@@ -288,7 +511,7 @@ GitHub Actions 自动触发
        ↓
 自动创建 Release（含更新日志 + 镜像信息）
        ↓
-服务器 docker compose pull → 部署完成
+服务器 docker pull → 部署完成
 ```
 
 ### 镜像标签
@@ -309,15 +532,7 @@ git commit -m "feat: 新功能"
 git push origin main
 
 # Actions 自动：构建镜像 → 推送 GHCR → 创建 Release
-# 服务器自动/手动：docker compose pull && docker compose up -d
-```
-
-### 手动打 tag 发版
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-# Actions 自动构建并创建 GitHub Release
+# 服务器：docker pull && 重新部署
 ```
 
 ---
@@ -329,14 +544,6 @@ git push origin v1.0.0
 | `PORT` | `26645` | 服务监听端口 |
 | `WORKERS` | `1` | uvicorn worker 数（建议保持 1，WebSocket 不支持多 worker） |
 
-在 `docker-compose.yml` 中修改：
-
-```yaml
-environment:
-  - PORT=26645
-  - WORKERS=1
-```
-
 ---
 
 ## 📖 使用指南
@@ -344,7 +551,7 @@ environment:
 ### 基本流程
 
 1. **获取 API Key**：前往 [platform.xiaomimimo.com](https://platform.xiaomimimo.com) 注册并获取 API Key
-2. **填入 Key**：在页面左侧边栏的设置区输入 API Key
+2. **填入 Key**：点击左侧导航的「设置」，输入 API Key 并保存
 3. **测试连接**：点击「测试连接」按钮，验证 Key 有效
 4. **选择功能**：在左侧导航选择预置音色 / 音色设计 / 音色复刻
 5. **配置参数**：选择音色、设置风格、输入合成文本
@@ -364,7 +571,7 @@ environment:
 
 ### 音色设计
 
-1. 在音色描述框输入想要的音色特征，如 "Give me a young male tone"
+1. 在音色描述框输入想要的音色特征
 2. 可点击预设模板快速填充
 3. （可选）添加音频标签控制风格
 4. 输入合成文本
@@ -385,36 +592,34 @@ environment:
 3. 底部显示段数统计
 4. 点击「全部合成」，逐段调用 API
 5. 进度条显示当前合成进度
-6. 全部完成后可逐个播放或下载
 
-### 合成历史
+### 设置页面
 
-- 点击工作区底部的「历史记录」展开面板
-- 每条记录显示：时间、音色、文本摘要
-- 支持操作：播放、下载、复用参数（一键填充到当前面板）、删除
-- 点击「清空历史」可清除所有记录
+- **API Key 配置**：输入、保存、测试连接
+- **默认参数**：设置默认音色、默认流式输出
+- **关于**：版本信息、API 平台链接
 
 ---
 
 ## 🔌 API 接口
 
-服务启动后访问 **http://localhost:26645/docs** 查看自动生成的 FastAPI Swagger 文档。
+服务启动后访问 **http://localhost:26645/docs** 查看 Swagger 文档。
 
 ### 主要端点
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| `POST` | `/api/synthesize/preset` | 预置音色合成（非流式） |
+| `POST` | `/api/synthesize/preset` | 预置音色合成 |
 | `POST` | `/api/synthesize/batch/preset` | 预置音色批量合成 |
-| `POST` | `/api/synthesize/voicedesign` | 音色设计合成（非流式） |
+| `POST` | `/api/synthesize/voicedesign` | 音色设计合成 |
 | `POST` | `/api/synthesize/batch/voicedesign` | 音色设计批量合成 |
-| `POST` | `/api/synthesize/voiceclone` | 音色复刻合成（非流式） |
+| `POST` | `/api/synthesize/voiceclone` | 音色复刻合成 |
 | `POST` | `/api/synthesize/batch/voiceclone` | 音色复刻批量合成 |
 | `WS`   | `/api/ws/synthesize` | 流式合成（WebSocket） |
-| `GET`  | `/api/test-connection` | 测试 API Key 连接 |
+| `GET`  | `/api/test-connection` | 测试 API Key |
 | `GET`  | `/api/voices` | 获取音色列表 |
-| `GET`  | `/api/style-tags` | 获取风格标签列表 |
-| `GET`  | `/api/audio-tags` | 获取音频标签列表 |
+| `GET`  | `/api/style-tags` | 获取风格标签 |
+| `GET`  | `/api/audio-tags` | 获取音频标签 |
 | `GET`  | `/api/health` | 健康检查 |
 
 ### 请求示例
@@ -426,10 +631,7 @@ curl -X POST http://localhost:26645/api/synthesize/preset \
   -d '{
     "voice": "冰糖",
     "text": "你好，欢迎使用 MiMo 语音合成。",
-    "style_prompt": "用温柔的语调",
-    "audio_tags": null,
-    "director": null,
-    "singing": false
+    "style_prompt": "用温柔的语调"
   }' \
   --output output.wav
 ```
@@ -438,76 +640,20 @@ curl -X POST http://localhost:26645/api/synthesize/preset \
 
 ## 🛠️ 技术栈
 
-| 层 | 技术 | 说明 |
-|----|------|------|
-| 后端框架 | FastAPI | 异步 Python Web 框架 |
-| HTTP 客户端 | httpx | 异步 HTTP 客户端，调用 MiMo API |
-| WebSocket | websockets | 流式音频传输 |
-| 数据校验 | Pydantic | 请求/响应模型 |
-| 前端 | 原生 HTML/CSS/JS | 零外部依赖 |
-| 音频播放 | Web Audio API | PCM 流式播放 + 波形可视化 |
-| 存储 | IndexedDB | 合成历史本地存储 |
-| CI/CD | GitHub Actions | 自动构建 + 发布 Docker 镜像 |
-| 部署 | Docker + Docker Compose | 容器化部署 |
-| 反向代理 | Nginx（可选） | HTTPS + WebSocket 代理 |
-
----
-
-## ❓ 常见问题
-
-### Q: 合成失败，提示 "Unauthorized"
-
-检查 API Key 是否正确填写，可以在 [platform.xiaomimimo.com](https://platform.xiaomimimo.com) 的控制台确认 Key 状态。
-
-### Q: 合成失败，提示 "Rate limit exceeded"
-
-API 调用频率超限，请稍后再试。MiMo 平台对每个 API Key 有调用频率限制。
-
-### Q: 音色复刻上传失败
-
-确认音频文件格式为 mp3 或 wav，且 Base64 编码后不超过 10MB。建议音频时长在 10-60 秒之间，效果最佳。
-
-### Q: 流式合成没有声音
-
-当前 MiMo-V2.5-TTS 的流式接口为兼容模式（推理完成后一次性返回），并非真正的低延迟流式。如遇到问题，建议使用非流式模式。
-
-### Q: Docker 容器内无法访问 MiMo API
-
-确保容器有外网访问权限。如果使用代理，需要在 docker-compose.yml 中配置 `HTTP_PROXY` / `HTTPS_PROXY` 环境变量。
-
-### Q: 如何更换端口
-
-修改 `docker-compose.yml` 中的端口映射：
-
-```yaml
-ports:
-  - "你的端口:26645"
-```
-
-### Q: GitHub Actions 构建失败
-
-1. 确认仓库已启用 GitHub Actions（Actions 页面 → 启用）
-2. 检查仓库 Settings → Actions → General → Workflow permissions 是否设为 "Read and write"
-3. 查看 Actions 页面的构建日志排查具体错误
-
-### Q: 如何回滚到旧版本
-
-```bash
-# 查看可用的镜像标签
-# 在 GitHub Packages 页面查看：https://github.com/bmbxwbh/mimo-tts-web/pkgs/container/mimo-tts-web
-
-# 修改 docker-compose.yml 中的镜像标签
-image: ghcr.io/bmbxwbh/mimo-tts-web:v1.0.0  # 替换为要回滚的版本
-
-# 重新部署
-docker compose pull && docker compose up -d
-```
+| 层 | 技术 |
+|----|------|
+| 后端 | FastAPI + httpx + websockets + Pydantic |
+| 前端 | 原生 HTML/CSS/JS + Web Audio API |
+| 存储 | IndexedDB（合成历史） |
+| CI/CD | GitHub Actions → GHCR |
+| 部署 | Docker |
+| 反代 | Nginx（可选） + Let's Encrypt |
 
 ---
 
 ## 📄 许可
 
-本项目为开源项目，基于 MiMo-V2.5-TTS API 构建。MiMo API 的使用需遵守 [小米 MiMo 开放平台服务协议](https://platform.xiaomimimo.com/docs/terms/user-agreement)。
+本项目基于 MiMo-V2.5-TTS API 构建。MiMo API 的使用需遵守 [小米 MiMo 开放平台服务协议](https://platform.xiaomimimo.com/docs/terms/user-agreement)。
 
 ---
 
