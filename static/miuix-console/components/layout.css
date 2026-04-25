@@ -12,6 +12,20 @@
   -webkit-overflow-scrolling:touch;
 }
 
+/* ── 自动为手机端主内容区添加底部内边距，防止 fixed 底栏遮挡 ── */
+@media(max-width:1023px){
+  .mx-app > .mx-body,
+  .mx-app > .mx-desktop-main.mx-body{
+    padding-bottom:calc(72px + var(--mx-safe-b));
+  }
+}
+@media(min-width:1024px){
+  .mx-app > .mx-body,
+  .mx-app > .mx-desktop-main.mx-body{
+    padding-bottom:0;
+  }
+}
+
 /* ── Padding utilities ── */
 .mx-pad{padding:12px}
 .mx-pad-b{padding-bottom:calc(72px + var(--mx-safe-b))}
