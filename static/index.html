@@ -33,6 +33,13 @@
     <link rel="stylesheet" href="/miuix-console/components/avatar.css">
     <!-- TTS 自定义样式 -->
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* 深色主题保底 — 确即使 CSS 未加载也有深色背景 */
+        body { background: #161616; color: #F2F2F2; }
+        /* 弹窗遮罩保底 */
+        .mx-modal-overlay { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); opacity:0; visibility:hidden; transition:opacity .2s,visibility .2s; }
+        .mx-modal-overlay.open { opacity:1; visibility:visible; }
+    </style>
 </head>
 <body>
 
@@ -82,6 +89,24 @@
 
 <!-- 主布局 -->
 <div class="mx-app">
+
+    <!-- 手机端顶栏（miuix 布局需要） -->
+    <header class="mx-topbar">
+        <div class="mx-topbar-left">
+            <div class="mx-logo">
+                <div class="mx-logo-icon">
+                    <svg viewBox="0 0 32 32" width="18" height="18">
+                        <path d="M10 20V12a6 6 0 0 1 12 0v8" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="16" cy="22" r="2" fill="#fff"/>
+                    </svg>
+                </div>
+                <span class="mx-logo-text">MiMo TTS</span>
+            </div>
+        </div>
+        <div class="mx-topbar-right">
+            <div id="mobile-api-badge" class="mx-badge mx-badge-error" style="font-size:10px">API 未配置</div>
+        </div>
+    </header>
 
     <!-- 侧边栏 -->
     <aside id="sidebar" class="mx-sidebar">
@@ -601,8 +626,15 @@
     </div>
 </div>
 
-<!-- Miuix Console 框架 -->
-<script src="/miuix-console/miuix-console.js"></script>
+<!-- Miuix Console JS 工具 -->
+<script src="/miuix-console/utils/ripple.js"></script>
+<script src="/miuix-console/utils/theme.js"></script>
+<script src="/miuix-console/utils/toast.js"></script>
+<script>
+    // 初始化 Miuix 工具
+    if (typeof MxRipple !== 'undefined') MxRipple.init();
+    if (typeof MxTheme !== 'undefined') MxTheme.init();
+</script>
 <!-- TTS 应用 -->
 <script src="/js/utils.js"></script>
 <script src="/js/api.js"></script>
