@@ -286,15 +286,19 @@ class WaveformRenderer {
 
         ctx.clearRect(0, 0, w, h);
 
+        const isDark = document.documentElement.dataset.theme !== 'light';
+        const progressColor = isDark ? '#818cf8' : '#6366f1';
+        const defaultColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
+
         for (let i = 0; i < peaks.length; i++) {
             const barH = Math.max(2, peaks[i] * (h * 0.85));
             const x = i * barW;
             const frac = i / peaks.length;
 
             if (frac <= this.progress) {
-                ctx.fillStyle = '#818cf8';
+                ctx.fillStyle = progressColor;
             } else {
-                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                ctx.fillStyle = defaultColor;
             }
 
             ctx.beginPath();

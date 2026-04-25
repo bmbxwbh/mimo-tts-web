@@ -173,6 +173,7 @@ const UI = {
     updateApiStatus(hasKey) {
         const badge = document.getElementById('sidebar-api-status');
         const settingsBadge = document.getElementById('settings-api-status');
+        const mobileBadge = document.getElementById('mobile-api-badge');
         if (badge) {
             badge.className = `mx-badge ${hasKey ? 'mx-badge-success' : 'mx-badge-error'}`;
             badge.querySelector('span').textContent = hasKey ? 'API 已连接' : 'API 未配置';
@@ -180,6 +181,10 @@ const UI = {
         if (settingsBadge) {
             settingsBadge.className = `mx-badge ${hasKey ? 'mx-badge-success' : 'mx-badge-error'}`;
             settingsBadge.textContent = hasKey ? '已配置' : '未配置';
+        }
+        if (mobileBadge) {
+            mobileBadge.className = `mx-badge ${hasKey ? 'mx-badge-success' : 'mx-badge-error'}`;
+            mobileBadge.textContent = hasKey ? 'API 已连接' : 'API 未配置';
         }
     },
 
