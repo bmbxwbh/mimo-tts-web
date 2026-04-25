@@ -232,8 +232,8 @@
     -webkit-backdrop-filter:blur(24px) saturate(1.8);
     flex-shrink:0;
   }
-  [data-theme="dark"] .mx-desktop-topbar{background:rgba(0,0,0,0.82)}
-  [data-theme="light"] .mx-desktop-topbar{background:rgba(247,247,247,0.85)}
+  [data-theme="dark"] .mx-desktop-topbar{background:rgba(0,0,0,0.6)}
+  [data-theme="light"] .mx-desktop-topbar{background:rgba(247,247,247,0.65)}
 
   .mx-desktop-main{
     flex:1;padding:28px;overflow-y:auto;background:var(--mx-bg);
