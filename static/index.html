@@ -1,675 +1,609 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <title>MiMo TTS — 语音合成工作台</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- MiSans 字体 -->
+    <link href="https://cdn.jsdelivr.net/npm/misans@4.1/lib/Normal/MiSans-Regular.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/misans@4.1/lib/Normal/MiSans-Medium.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/misans@4.1/lib/Normal/MiSans-Semibold.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/misans@4.1/lib/Normal/MiSans-Bold.min.css" rel="stylesheet">
+    <!-- Miuix Core -->
+    <link rel="stylesheet" href="/miuix-console/core/tokens.css">
+    <link rel="stylesheet" href="/miuix-console/core/base.css">
+    <link rel="stylesheet" href="/miuix-console/core/animations.css">
+    <!-- Miuix Components -->
+    <link rel="stylesheet" href="/miuix-console/components/layout.css">
+    <link rel="stylesheet" href="/miuix-console/components/navigation.css">
+    <link rel="stylesheet" href="/miuix-console/components/card.css">
+    <link rel="stylesheet" href="/miuix-console/components/button.css">
+    <link rel="stylesheet" href="/miuix-console/components/input.css">
+    <link rel="stylesheet" href="/miuix-console/components/tabs.css">
+    <link rel="stylesheet" href="/miuix-console/components/tag.css">
+    <link rel="stylesheet" href="/miuix-console/components/badge.css">
+    <link rel="stylesheet" href="/miuix-console/components/switch.css">
+    <link rel="stylesheet" href="/miuix-console/components/modal.css">
+    <link rel="stylesheet" href="/miuix-console/components/toast.css">
+    <link rel="stylesheet" href="/miuix-console/components/progress.css">
+    <link rel="stylesheet" href="/miuix-console/components/upload.css">
+    <link rel="stylesheet" href="/miuix-console/components/drawer.css">
+    <link rel="stylesheet" href="/miuix-console/components/tooltip.css">
+    <link rel="stylesheet" href="/miuix-console/components/empty.css">
+    <link rel="stylesheet" href="/miuix-console/components/avatar.css">
+    <!-- TTS 自定义样式 -->
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
 <!-- Toast 通知容器 -->
-<div id="toast-container"></div>
+<div id="toast-container" class="mx-toast-container"></div>
 
 <!-- API Key 配置弹窗 -->
-<div id="api-key-modal" class="modal-overlay">
-    <div class="modal-card">
-        <div class="modal-icon">
-            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-            </svg>
+<div id="api-key-modal" class="mx-modal-overlay">
+    <div class="mx-modal mx-modal-sm">
+        <div class="mx-modal-body" style="padding:24px 20px;text-align:center">
+            <div class="mx-modal-confirm-icon info" style="margin:0 auto 16px">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            </div>
+            <div class="mx-modal-confirm-title">配置 API Key</div>
+            <div class="mx-modal-confirm-text" style="margin-bottom:16px">需要填入 MiMo API Key 才能使用语音合成服务</div>
+            <div class="mx-input-wrap" style="margin-bottom:12px">
+                <input type="password" id="modal-api-key" class="mx-input" placeholder="输入你的 MiMo API Key" autocomplete="off">
+            </div>
+            <button id="modal-save-btn" class="mx-btn mx-btn-primary" style="width:100%;margin-bottom:12px">保存并开始使用</button>
+            <p style="font-size:11px;color:var(--mx-t3);margin-bottom:8px">API Key 仅存储在浏览器本地，不会上传到服务器</p>
+            <a href="https://platform.xiaomimimo.com" target="_blank" style="font-size:12px;color:var(--mx-primary)">还没有 API Key？前往 MiMo 平台获取 →</a>
         </div>
-        <h2 class="modal-title">配置 API Key</h2>
-        <p class="modal-desc">需要填入 MiMo API Key 才能使用语音合成服务</p>
-        <div class="modal-input-wrap">
-            <input type="password" id="modal-api-key" class="modal-input" placeholder="输入你的 MiMo API Key" autocomplete="off">
-            <button id="modal-toggle-key" class="btn-icon modal-eye" title="显示/隐藏">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-        </div>
-        <button id="modal-save-btn" class="btn btn-primary btn-lg btn-full">保存并开始使用</button>
-        <p class="modal-hint">API Key 仅存储在浏览器本地，不会上传到服务器</p>
-        <a href="https://platform.xiaomimimo.com" target="_blank" class="modal-link">还没有 API Key？前往 MiMo 平台获取 →</a>
     </div>
 </div>
 
 <!-- 移动端底部导航 -->
-<nav id="mobile-nav" class="mobile-nav">
-    <button class="mobile-nav-item active" data-tab="preset">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        <span>预置音色</span>
-    </button>
-    <button class="mobile-nav-item" data-tab="voicedesign">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-        <span>音色设计</span>
-    </button>
-    <button class="mobile-nav-item" data-tab="voiceclone">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-        <span>音色复刻</span>
-    </button>
-    <button class="mobile-nav-item" data-tab="settings">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span>设置</span>
-    </button>
+<nav id="mobile-nav" class="mx-bottom-nav">
+    <ul class="mx-bottom-nav-items">
+        <li class="mx-btm-item active" data-tab="preset">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <span>预置音色</span>
+        </li>
+        <li class="mx-btm-item" data-tab="voicedesign">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            <span>音色设计</span>
+        </li>
+        <li class="mx-btm-item" data-tab="voiceclone">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            <span>音色复刻</span>
+        </li>
+        <li class="mx-btm-item" data-tab="settings">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>设置</span>
+        </li>
+    </ul>
 </nav>
 
 <!-- 主布局 -->
-<div class="app-layout">
+<div class="mx-app">
 
     <!-- 侧边栏 -->
-    <aside id="sidebar" class="sidebar">
-        <div class="sidebar-inner">
-            <div class="sidebar-logo">
-                <div class="logo-icon">
-                    <svg viewBox="0 0 32 32" width="28" height="28">
-                        <defs><linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#818cf8"/><stop offset="100%" style="stop-color:#6366f1"/></linearGradient></defs>
-                        <circle cx="16" cy="16" r="14" fill="url(#logo-grad)"/>
-                        <path d="M10 20V12a6 6 0 0 1 12 0v8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-                        <circle cx="16" cy="22" r="2" fill="#fff"/>
-                    </svg>
-                </div>
-                <div class="logo-text">
-                    <span class="logo-title">MiMo TTS</span>
-                    <span class="logo-subtitle">语音合成工作台</span>
-                </div>
+    <aside id="sidebar" class="mx-sidebar">
+        <div class="mx-logo" style="padding:0 10px;margin-bottom:16px">
+            <div class="mx-logo-icon">
+                <svg viewBox="0 0 32 32" width="18" height="18">
+                    <path d="M10 20V12a6 6 0 0 1 12 0v8" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="16" cy="22" r="2" fill="#fff"/>
+                </svg>
             </div>
+            <span class="mx-logo-text">MiMo TTS</span>
+        </div>
 
-            <nav class="sidebar-nav">
-                <button class="nav-item active" data-tab="preset">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                    <span>预置音色合成</span>
-                </button>
-                <button class="nav-item" data-tab="voicedesign">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                    <span>音色设计</span>
-                </button>
-                <button class="nav-item" data-tab="voiceclone">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-                    <span>音色复刻</span>
-                </button>
-                <button class="nav-item" data-tab="settings">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    <span>设置</span>
-                </button>
-            </nav>
+        <div class="mx-sidebar-section">合成</div>
+        <div class="mx-nav-item active" data-tab="preset">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <span class="mx-nav-label">预置音色</span>
+        </div>
+        <div class="mx-nav-item" data-tab="voicedesign">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            <span class="mx-nav-label">音色设计</span>
+        </div>
+        <div class="mx-nav-item" data-tab="voiceclone">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            <span class="mx-nav-label">音色复刻</span>
+        </div>
 
-            <div class="sidebar-footer">
-                <div class="sidebar-divider"></div>
-                <div class="sidebar-api-status">
-                    <span id="sidebar-api-dot" class="status-dot status-dot-red"></span>
-                    <span class="sidebar-api-label">API 未配置</span>
-                </div>
+        <div class="mx-sidebar-section" style="margin-top:16px">系统</div>
+        <div class="mx-nav-item" data-tab="settings">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span class="mx-nav-label">设置</span>
+        </div>
+
+        <!-- 主题切换 -->
+        <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--mx-divider)">
+            <div class="mx-nav-item" onclick="MxTheme.toggle()">
+                <svg class="mx-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <svg class="mx-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                <span class="mx-nav-label">切换主题</span>
             </div>
         </div>
     </aside>
 
-    <button id="sidebar-toggle" class="sidebar-toggle" title="收起侧边栏">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
+    <!-- 桌面端顶栏 -->
+    <div class="mx-desktop-shell">
+        <header class="mx-desktop-topbar">
+            <div class="mx-breadcrumb">
+                <span>MiMo TTS</span>
+                <span class="mx-breadcrumb-sep">›</span>
+                <span id="breadcrumb-current">预置音色合成</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+                <div id="sidebar-api-status" class="mx-badge mx-badge-error">
+                    <span>API 未配置</span>
+                </div>
+            </div>
+        </header>
 
-    <!-- 工作区 -->
-    <main class="workspace">
-
-        <!-- ====== Tab: 预置音色合成 ====== -->
-        <section id="panel-preset" class="panel active">
-            <div class="panel-header">
-                <h1 class="panel-title">预置音色合成</h1>
-                <p class="panel-desc">选择音色、控制风格，一句话生成自然语音</p>
+        <!-- 工作区 -->
+        <main class="mx-desktop-main mx-body">
+            <div class="mx-page-head">
+                <h1 class="mx-page-title" id="page-title">预置音色合成</h1>
+                <p class="mx-page-sub" id="page-desc">选择音色、控制风格，一句话生成自然语音</p>
             </div>
 
-            <!-- 音色选择器 -->
-            <div class="card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    选择音色
-                </div>
-                <div id="voice-grid" class="voice-grid"></div>
-            </div>
-
-            <!-- 风格控制区 -->
-            <div class="card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    风格控制
-                </div>
-
-                <div class="sub-tabs">
-                    <button class="sub-tab active" data-subtab="natural-lang">自然语言</button>
-                    <button class="sub-tab" data-subtab="audio-tags">音频标签</button>
-                    <div class="sub-tab-indicator"></div>
-                </div>
-
-                <!-- 自然语言 Tab -->
-                <div id="preset-natural-lang" class="sub-panel active">
-                    <textarea id="preset-style-prompt" class="textarea" rows="3"
-                        placeholder="描述你想要的语音风格，例如：用轻快上扬的语调，带着查到成绩后压抑不住的激动与小骄傲"></textarea>
-                    <div class="char-count"><span id="preset-style-count">0</span> 字</div>
-
-                    <!-- 导演模式 -->
-                    <div class="toggle-row">
-                        <label class="toggle-label">
-                            <input type="checkbox" id="preset-director-toggle" class="toggle-input">
-                            <span class="toggle-switch"></span>
-                            <span>导演模式</span>
-                        </label>
-                        <span class="toggle-hint">从角色、场景、指导三维度精细控制</span>
+            <!-- ====== Tab: 预置音色合成 ====== -->
+            <section id="panel-preset" class="panel active">
+                <!-- 音色选择器 -->
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">选择音色</span>
                     </div>
-                    <div id="preset-director-fields" class="director-fields hidden">
-                        <div class="director-field">
-                            <label>角色</label>
-                            <textarea id="director-character" class="textarea" rows="2" placeholder="人物身份、性格、气质与说话习惯"></textarea>
+                    <div class="mx-card-body">
+                        <div id="voice-grid" class="voice-grid"></div>
+                    </div>
+                </div>
+
+                <!-- 风格控制区 -->
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">风格控制</span>
+                    </div>
+                    <div class="mx-card-body">
+                        <div class="mx-tabs" id="preset-style-tabs">
+                            <div class="mx-tab active" data-subtab="natural-lang">自然语言</div>
+                            <div class="mx-tab" data-subtab="audio-tags">音频标签</div>
                         </div>
-                        <div class="director-field">
-                            <label>场景</label>
-                            <textarea id="director-scene" class="textarea" rows="2" placeholder="此刻发生了什么、和谁说话、情绪状态"></textarea>
+
+                        <!-- 自然语言 Tab -->
+                        <div id="preset-natural-lang" class="sub-panel active" style="padding-top:12px">
+                            <textarea id="preset-style-prompt" class="mx-textarea" rows="3"
+                                placeholder="描述你想要的语音风格，例如：用轻快上扬的语调，带着查到成绩后压抑不住的激动与小骄傲"></textarea>
+                            <div style="text-align:right;font-size:11px;color:var(--mx-t3);margin-top:4px"><span id="preset-style-count">0</span> 字</div>
+
+                            <!-- 导演模式 -->
+                            <div class="mx-switch" style="margin-top:12px">
+                                <input type="checkbox" id="preset-director-toggle">
+                                <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                                <span class="mx-switch-label">导演模式</span>
+                            </div>
+                            <div id="preset-director-fields" class="director-fields hidden">
+                                <div style="margin-top:12px">
+                                    <label class="mx-label">角色</label>
+                                    <textarea id="director-character" class="mx-textarea" rows="2" placeholder="人物身份、性格、气质与说话习惯"></textarea>
+                                </div>
+                                <div style="margin-top:12px">
+                                    <label class="mx-label">场景</label>
+                                    <textarea id="director-scene" class="mx-textarea" rows="2" placeholder="此刻发生了什么、和谁说话、情绪状态"></textarea>
+                                </div>
+                                <div style="margin-top:12px">
+                                    <label class="mx-label">指导</label>
+                                    <textarea id="director-direction" class="mx-textarea" rows="3" placeholder="语速、气息、停顿、重音、共鸣位置、情绪起伏"></textarea>
+                                </div>
+                            </div>
                         </div>
-                        <div class="director-field">
-                            <label>指导</label>
-                            <textarea id="director-direction" class="textarea" rows="3" placeholder="语速、气息、停顿、重音、共鸣位置、情绪起伏"></textarea>
+
+                        <!-- 音频标签 Tab -->
+                        <div id="preset-audio-tags" class="sub-panel" style="padding-top:12px">
+                            <div class="tags-section">
+                                <div class="tags-label">风格标签 <span style="font-weight:400;text-transform:none">（点击选择，可多选）</span></div>
+                                <div id="style-tags-container" class="tags-container"></div>
+                            </div>
+                            <div id="tags-preview" class="tags-preview hidden">
+                                <span class="tags-preview-label">前缀：</span>
+                                <code id="tags-preview-text"></code>
+                            </div>
+                            <textarea id="preset-tagged-text" class="mx-textarea" rows="4" placeholder="输入要合成的文本"></textarea>
+                            <div class="tags-section" style="margin-top:12px">
+                                <div class="tags-label">插入音频标签 <span style="font-weight:400;text-transform:none">（点击在光标位置插入）</span></div>
+                                <div id="audio-tags-container" class="tags-container compact"></div>
+                            </div>
+                        </div>
+
+                        <!-- 唱歌模式 -->
+                        <div class="mx-switch" style="margin-top:12px">
+                            <input type="checkbox" id="preset-singing-toggle">
+                            <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                            <span class="mx-switch-label">唱歌模式</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- 音频标签 Tab -->
-                <div id="preset-audio-tags" class="sub-panel">
-                    <div class="tags-section">
-                        <div class="tags-label">风格标签 <span class="tags-hint">（点击选择，可多选）</span></div>
-                        <div id="style-tags-container" class="tags-container"></div>
+                <!-- 合成文本 + 输出 -->
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">合成文本</span>
                     </div>
-                    <div id="tags-preview" class="tags-preview hidden">
-                        <span class="tags-preview-label">前缀：</span>
-                        <code id="tags-preview-text"></code>
-                    </div>
-                    <textarea id="preset-tagged-text" class="textarea" rows="4" placeholder="输入要合成的文本"></textarea>
-                    <div class="tags-section">
-                        <div class="tags-label">插入音频标签 <span class="tags-hint">（点击在光标位置插入）</span></div>
-                        <div id="audio-tags-container" class="tags-container compact"></div>
-                    </div>
-                </div>
-
-                <!-- 唱歌模式 -->
-                <div class="toggle-row" style="margin-top: 12px;">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="preset-singing-toggle" class="toggle-input">
-                        <span class="toggle-switch"></span>
-                        <span>唱歌模式</span>
-                    </label>
-                    <span class="toggle-hint">自动添加 (唱歌) 前缀</span>
-                </div>
-            </div>
-
-            <!-- 合成文本 + 输出 -->
-            <div class="card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    合成文本
-                </div>
-
-                <!-- 批量模式开关 -->
-                <div class="toggle-row" style="margin-top: 0; margin-bottom: 12px;">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="preset-batch-toggle" class="toggle-input batch-toggle" data-panel="preset">
-                        <span class="toggle-switch"></span>
-                        <span>批量模式</span>
-                    </label>
-                    <span class="toggle-hint">每行一段文本，逐段合成</span>
-                </div>
-
-                <textarea id="preset-text" class="textarea textarea-lg" rows="5" placeholder="输入要合成的文本内容……"></textarea>
-                <div class="char-count"><span id="preset-text-count">0</span> 字</div>
-
-                <!-- 批量进度 -->
-                <div id="preset-batch-progress" class="batch-progress hidden">
-                    <div class="batch-info">
-                        <span id="preset-batch-count">共 0 段</span>
-                        <span id="preset-batch-status"></span>
-                    </div>
-                    <div class="batch-bar">
-                        <div id="preset-batch-fill" class="batch-bar-fill"></div>
-                    </div>
-                    <label class="toggle-label compact" style="margin-top: 8px;">
-                        <input type="checkbox" id="preset-batch-autoplay" class="toggle-input" checked>
-                        <span class="toggle-switch"></span>
-                        <span>每段合成后自动播放</span>
-                    </label>
-                </div>
-
-                <div class="action-row">
-                    <div class="stream-toggle">
-                        <label class="toggle-label compact">
-                            <input type="checkbox" id="preset-stream-toggle" class="toggle-input">
-                            <span class="toggle-switch"></span>
-                            <span>流式输出</span>
-                        </label>
-                    </div>
-                    <button id="preset-synthesize-btn" class="btn btn-primary btn-lg btn-synthesize">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        <span class="btn-text">开始合成</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 输出区 -->
-            <div id="preset-output" class="card output-card hidden">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                    合成结果
-                    <span id="preset-duration" class="duration-badge"></span>
-                </div>
-                <canvas id="preset-waveform" class="waveform-canvas"></canvas>
-                <div class="player-controls">
-                    <button id="preset-play-btn" class="btn-icon play-btn">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    </button>
-                    <div class="progress-wrap">
-                        <span id="preset-current-time" class="time-label">0:00</span>
-                        <div class="progress-bar" id="preset-progress-bar">
-                            <div class="progress-fill" id="preset-progress-fill"></div>
+                    <div class="mx-card-body">
+                        <!-- 批量模式 -->
+                        <div class="mx-switch" style="margin-bottom:12px">
+                            <input type="checkbox" id="preset-batch-toggle" class="batch-toggle" data-panel="preset">
+                            <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                            <span class="mx-switch-label">批量模式</span>
                         </div>
-                        <span id="preset-total-time" class="time-label">0:00</span>
-                    </div>
-                    <div class="volume-wrap">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                        <input type="range" id="preset-volume" class="volume-slider" min="0" max="1" step="0.05" value="1">
-                    </div>
-                    <button id="preset-download-btn" class="btn-icon" title="下载 WAV">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    </button>
-                </div>
 
-                <!-- 参数摘要 -->
-                <div id="preset-param-summary" class="param-summary">
-                    <div class="param-summary-title">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        参数摘要
-                    </div>
-                    <div id="preset-param-rows" class="param-rows"></div>
-                    <div class="param-actions">
-                        <button id="preset-copy-params" class="btn btn-secondary btn-sm">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            复制为 JSON
-                        </button>
-                        <button id="preset-resynthesize" class="btn btn-secondary btn-sm">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                            重新合成
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
+                        <textarea id="preset-text" class="mx-textarea" rows="5" placeholder="输入要合成的文本内容……"></textarea>
+                        <div style="text-align:right;font-size:11px;color:var(--mx-t3);margin-top:4px"><span id="preset-text-count">0</span> 字</div>
 
-        <!-- ====== Tab: 音色设计 ====== -->
-        <section id="panel-voicedesign" class="panel">
-            <div class="panel-header">
-                <h1 class="panel-title">音色设计</h1>
-                <p class="panel-desc">用文字描述你想要的音色，AI 即刻生成</p>
-            </div>
-
-            <div class="card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    音色描述
-                </div>
-                <textarea id="voicedesign-description" class="textarea" rows="3" placeholder="描述你想要的音色，例如：温柔甜美的年轻女性"></textarea>
-                <div class="template-chips">
-                    <span class="template-chips-label">快速填充：</span>
-                    <div id="voicedesign-templates" class="chips-row"></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
-                    风格控制（音频标签）
-                </div>
-                <div class="tags-section">
-                    <div class="tags-label">风格标签</div>
-                    <div id="voicedesign-style-tags" class="tags-container"></div>
-                </div>
-                <div id="voicedesign-tags-preview" class="tags-preview hidden">
-                    <span class="tags-preview-label">前缀：</span>
-                    <code id="voicedesign-tags-preview-text"></code>
-                </div>
-
-                <!-- 批量模式 -->
-                <div class="toggle-row" style="margin-top: 0; margin-bottom: 12px;">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="voicedesign-batch-toggle" class="toggle-input batch-toggle" data-panel="voicedesign">
-                        <span class="toggle-switch"></span>
-                        <span>批量模式</span>
-                    </label>
-                    <span class="toggle-hint">每行一段文本</span>
-                </div>
-
-                <textarea id="voicedesign-tagged-text" class="textarea" rows="3" placeholder="输入要合成的文本"></textarea>
-                <div class="char-count"><span id="voicedesign-text-count">0</span> 字</div>
-
-                <div id="voicedesign-batch-progress" class="batch-progress hidden">
-                    <div class="batch-info">
-                        <span id="voicedesign-batch-count">共 0 段</span>
-                        <span id="voicedesign-batch-status"></span>
-                    </div>
-                    <div class="batch-bar"><div id="voicedesign-batch-fill" class="batch-bar-fill"></div></div>
-                    <label class="toggle-label compact" style="margin-top: 8px;">
-                        <input type="checkbox" id="voicedesign-batch-autoplay" class="toggle-input" checked>
-                        <span class="toggle-switch"></span>
-                        <span>每段合成后自动播放</span>
-                    </label>
-                </div>
-
-                <div class="tags-section">
-                    <div class="tags-label">插入音频标签</div>
-                    <div id="voicedesign-audio-tags" class="tags-container compact"></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="action-row">
-                    <div class="stream-toggle">
-                        <label class="toggle-label compact">
-                            <input type="checkbox" id="voicedesign-stream-toggle" class="toggle-input">
-                            <span class="toggle-switch"></span>
-                            <span>流式输出</span>
-                        </label>
-                    </div>
-                    <button id="voicedesign-synthesize-btn" class="btn btn-primary btn-lg btn-synthesize">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        <span class="btn-text">开始合成</span>
-                    </button>
-                </div>
-            </div>
-
-            <div id="voicedesign-output" class="card output-card hidden">
-                <div class="card-title">
-                    合成结果
-                    <span id="voicedesign-duration" class="duration-badge"></span>
-                </div>
-                <canvas id="voicedesign-waveform" class="waveform-canvas"></canvas>
-                <div class="player-controls">
-                    <button id="voicedesign-play-btn" class="btn-icon play-btn">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    </button>
-                    <div class="progress-wrap">
-                        <span id="voicedesign-current-time" class="time-label">0:00</span>
-                        <div class="progress-bar" id="voicedesign-progress-bar"><div class="progress-fill" id="voicedesign-progress-fill"></div></div>
-                        <span id="voicedesign-total-time" class="time-label">0:00</span>
-                    </div>
-                    <div class="volume-wrap">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                        <input type="range" id="voicedesign-volume" class="volume-slider" min="0" max="1" step="0.05" value="1">
-                    </div>
-                    <button id="voicedesign-download-btn" class="btn-icon" title="下载 WAV">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    </button>
-                </div>
-                <div id="voicedesign-param-summary" class="param-summary">
-                    <div class="param-summary-title">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        参数摘要
-                    </div>
-                    <div id="voicedesign-param-rows" class="param-rows"></div>
-                    <div class="param-actions">
-                        <button id="voicedesign-copy-params" class="btn btn-secondary btn-sm">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            复制为 JSON
-                        </button>
-                        <button id="voicedesign-resynthesize" class="btn btn-secondary btn-sm">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                            重新合成
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ====== Tab: 音色复刻 ====== -->
-        <section id="panel-voiceclone" class="panel">
-            <div class="panel-header">
-                <h1 class="panel-title">音色复刻</h1>
-                <p class="panel-desc">上传音频样本，精准复刻目标音色</p>
-            </div>
-
-            <div class="card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    上传音频样本
-                </div>
-                <div id="voiceclone-dropzone" class="dropzone">
-                    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    <p class="dropzone-text">拖拽音频文件到此处，或</p>
-                    <button id="voiceclone-file-btn" class="btn btn-secondary btn-sm">选择文件</button>
-                    <p class="dropzone-hint">支持 MP3、WAV 格式，Base64 后 ≤ 10MB</p>
-                    <input type="file" id="voiceclone-file-input" accept=".mp3,.wav,audio/mpeg,audio/wav" hidden>
-                </div>
-                <div id="voiceclone-file-info" class="file-info hidden">
-                    <div class="file-info-main">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                        <div class="file-info-text">
-                            <span id="voiceclone-file-name" class="file-name"></span>
-                            <span id="voiceclone-file-meta" class="file-meta"></span>
+                        <!-- 批量进度 -->
+                        <div id="preset-batch-progress" class="batch-progress hidden">
+                            <div class="batch-info">
+                                <span id="preset-batch-count">共 0 段</span>
+                                <span id="preset-batch-status"></span>
+                            </div>
+                            <div class="mx-progress"><div id="preset-batch-fill" class="mx-progress-bar" style="width:0%"></div></div>
+                            <div class="mx-switch" style="margin-top:8px">
+                                <input type="checkbox" id="preset-batch-autoplay" checked>
+                                <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                                <span class="mx-switch-label">每段合成后自动播放</span>
+                            </div>
                         </div>
-                        <button id="voiceclone-remove-btn" class="btn-icon" title="移除">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        </button>
+
+                        <div class="action-row">
+                            <div class="mx-switch">
+                                <input type="checkbox" id="preset-stream-toggle">
+                                <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                                <span class="mx-switch-label">流式输出</span>
+                            </div>
+                            <button id="preset-synthesize-btn" class="mx-btn mx-btn-primary mx-btn-lg" data-ripple>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <span class="btn-text">开始合成</span>
+                            </button>
+                        </div>
                     </div>
-                    <canvas id="voiceclone-preview-waveform" class="waveform-canvas waveform-sm"></canvas>
+                </div>
+
+                <!-- 输出区 -->
+                <div id="preset-output" class="mx-card output-card hidden">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">合成结果</span>
+                        <span id="preset-duration" class="mx-badge mx-badge-neutral"></span>
+                    </div>
+                    <div class="mx-card-body">
+                        <canvas id="preset-waveform" class="waveform-canvas"></canvas>
+                        <div class="player-controls">
+                            <button id="preset-play-btn" class="mx-btn-icon play-btn" data-ripple>
+                                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            </button>
+                            <div class="progress-wrap">
+                                <span id="preset-current-time" class="time-label">0:00</span>
+                                <div class="mx-progress" id="preset-progress-bar" style="cursor:pointer"><div class="mx-progress-bar" id="preset-progress-fill" style="width:0%"></div></div>
+                                <span id="preset-total-time" class="time-label">0:00</span>
+                            </div>
+                            <button id="preset-download-btn" class="mx-btn-icon" data-ripple title="下载 WAV">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </button>
+                        </div>
+                        <!-- 参数摘要 -->
+                        <div id="preset-param-summary" class="param-summary">
+                            <div class="param-summary-title">参数摘要</div>
+                            <div id="preset-param-rows" class="param-rows"></div>
+                            <div class="param-actions">
+                                <button id="preset-copy-params" class="mx-btn mx-btn-secondary mx-btn-sm" data-ripple>复制 JSON</button>
+                                <button id="preset-resynthesize" class="mx-btn mx-btn-secondary mx-btn-sm" data-ripple>重新合成</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== Tab: 音色设计 ====== -->
+            <section id="panel-voicedesign" class="panel">
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">音色描述</span>
+                    </div>
+                    <div class="mx-card-body">
+                        <textarea id="voicedesign-description" class="mx-textarea" rows="3" placeholder="描述你想要的音色，例如：温柔甜美的年轻女性"></textarea>
+                        <div class="template-chips">
+                            <span class="template-chips-label">快速填充：</span>
+                            <div id="voicedesign-templates" class="mx-tag-group"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">风格控制（音频标签）</span>
+                    </div>
+                    <div class="mx-card-body">
+                        <div class="tags-section">
+                            <div class="tags-label">风格标签</div>
+                            <div id="voicedesign-style-tags" class="tags-container"></div>
+                        </div>
+                        <div id="voicedesign-tags-preview" class="tags-preview hidden">
+                            <span class="tags-preview-label">前缀：</span>
+                            <code id="voicedesign-tags-preview-text"></code>
+                        </div>
+                        <div class="mx-switch" style="margin-bottom:12px">
+                            <input type="checkbox" id="voicedesign-batch-toggle" class="batch-toggle" data-panel="voicedesign">
+                            <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                            <span class="mx-switch-label">批量模式</span>
+                        </div>
+                        <textarea id="voicedesign-tagged-text" class="mx-textarea" rows="3" placeholder="输入要合成的文本"></textarea>
+                        <div style="text-align:right;font-size:11px;color:var(--mx-t3);margin-top:4px"><span id="voicedesign-text-count">0</span> 字</div>
+                        <div id="voicedesign-batch-progress" class="batch-progress hidden">
+                            <div class="batch-info">
+                                <span id="voicedesign-batch-count">共 0 段</span>
+                                <span id="voicedesign-batch-status"></span>
+                            </div>
+                            <div class="mx-progress"><div id="voicedesign-batch-fill" class="mx-progress-bar" style="width:0%"></div></div>
+                            <div class="mx-switch" style="margin-top:8px">
+                                <input type="checkbox" id="voicedesign-batch-autoplay" checked>
+                                <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                                <span class="mx-switch-label">每段合成后自动播放</span>
+                            </div>
+                        </div>
+                        <div class="tags-section" style="margin-top:12px">
+                            <div class="tags-label">插入音频标签</div>
+                            <div id="voicedesign-audio-tags" class="tags-container compact"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-body">
+                        <div class="action-row">
+                            <div class="mx-switch">
+                                <input type="checkbox" id="voicedesign-stream-toggle">
+                                <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                                <span class="mx-switch-label">流式输出</span>
+                            </div>
+                            <button id="voicedesign-synthesize-btn" class="mx-btn mx-btn-primary mx-btn-lg" data-ripple>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <span class="btn-text">开始合成</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="voicedesign-output" class="mx-card output-card hidden">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">合成结果</span>
+                        <span id="voicedesign-duration" class="mx-badge mx-badge-neutral"></span>
+                    </div>
+                    <div class="mx-card-body">
+                        <canvas id="voicedesign-waveform" class="waveform-canvas"></canvas>
+                        <div class="player-controls">
+                            <button id="voicedesign-play-btn" class="mx-btn-icon play-btn" data-ripple>
+                                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            </button>
+                            <div class="progress-wrap">
+                                <span id="voicedesign-current-time" class="time-label">0:00</span>
+                                <div class="mx-progress" id="voicedesign-progress-bar" style="cursor:pointer"><div class="mx-progress-bar" id="voicedesign-progress-fill" style="width:0%"></div></div>
+                                <span id="voicedesign-total-time" class="time-label">0:00</span>
+                            </div>
+                            <button id="voicedesign-download-btn" class="mx-btn-icon" data-ripple title="下载 WAV">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </button>
+                        </div>
+                        <div id="voicedesign-param-summary" class="param-summary">
+                            <div class="param-summary-title">参数摘要</div>
+                            <div id="voicedesign-param-rows" class="param-rows"></div>
+                            <div class="param-actions">
+                                <button id="voicedesign-copy-params" class="mx-btn mx-btn-secondary mx-btn-sm" data-ripple>复制 JSON</button>
+                                <button id="voicedesign-resynthesize" class="mx-btn mx-btn-secondary mx-btn-sm" data-ripple>重新合成</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== Tab: 音色复刻 ====== -->
+            <section id="panel-voiceclone" class="panel">
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">上传音频样本</span>
+                    </div>
+                    <div class="mx-card-body">
+                        <div id="voiceclone-dropzone" class="mx-upload">
+                            <div class="mx-upload-icon">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            </div>
+                            <div class="mx-upload-text">拖拽音频文件到此处，或点击选择</div>
+                            <div class="mx-upload-hint">支持 MP3、WAV 格式，Base64 后 ≤ 10MB</div>
+                            <input type="file" id="voiceclone-file-input" accept=".mp3,.wav,audio/mpeg,audio/wav" hidden>
+                        </div>
+                        <div id="voiceclone-file-info" class="file-info hidden">
+                            <div class="file-info-main">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                                <div class="file-info-text">
+                                    <span id="voiceclone-file-name" class="file-name"></span>
+                                    <span id="voiceclone-file-meta" class="file-meta"></span>
+                                </div>
+                                <button id="voiceclone-remove-btn" class="mx-btn-icon" title="移除">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                            </div>
+                            <canvas id="voiceclone-preview-waveform" class="waveform-canvas waveform-sm"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">风格控制（音频标签）</span>
+                    </div>
+                    <div class="mx-card-body">
+                        <div class="tags-section">
+                            <div class="tags-label">风格标签</div>
+                            <div id="voiceclone-style-tags" class="tags-container"></div>
+                        </div>
+                        <div id="voiceclone-tags-preview" class="tags-preview hidden">
+                            <span class="tags-preview-label">前缀：</span>
+                            <code id="voiceclone-tags-preview-text"></code>
+                        </div>
+                        <div class="mx-switch" style="margin-bottom:12px">
+                            <input type="checkbox" id="voiceclone-batch-toggle" class="batch-toggle" data-panel="voiceclone">
+                            <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                            <span class="mx-switch-label">批量模式</span>
+                        </div>
+                        <textarea id="voiceclone-tagged-text" class="mx-textarea" rows="3" placeholder="输入要合成的文本"></textarea>
+                        <div style="text-align:right;font-size:11px;color:var(--mx-t3);margin-top:4px"><span id="voiceclone-text-count">0</span> 字</div>
+                        <div id="voiceclone-batch-progress" class="batch-progress hidden">
+                            <div class="batch-info">
+                                <span id="voiceclone-batch-count">共 0 段</span>
+                                <span id="voiceclone-batch-status"></span>
+                            </div>
+                            <div class="mx-progress"><div id="voiceclone-batch-fill" class="mx-progress-bar" style="width:0%"></div></div>
+                            <div class="mx-switch" style="margin-top:8px">
+                                <input type="checkbox" id="voiceclone-batch-autoplay" checked>
+                                <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                                <span class="mx-switch-label">每段合成后自动播放</span>
+                            </div>
+                        </div>
+                        <div class="tags-section" style="margin-top:12px">
+                            <div class="tags-label">插入音频标签</div>
+                            <div id="voiceclone-audio-tags" class="tags-container compact"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-body">
+                        <div class="action-row">
+                            <div class="mx-switch">
+                                <input type="checkbox" id="voiceclone-stream-toggle">
+                                <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                                <span class="mx-switch-label">流式输出</span>
+                            </div>
+                            <button id="voiceclone-synthesize-btn" class="mx-btn mx-btn-primary mx-btn-lg" data-ripple>
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <span class="btn-text">开始合成</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="voiceclone-output" class="mx-card output-card hidden">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">合成结果</span>
+                        <span id="voiceclone-duration" class="mx-badge mx-badge-neutral"></span>
+                    </div>
+                    <div class="mx-card-body">
+                        <canvas id="voiceclone-waveform" class="waveform-canvas"></canvas>
+                        <div class="player-controls">
+                            <button id="voiceclone-play-btn" class="mx-btn-icon play-btn" data-ripple>
+                                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            </button>
+                            <div class="progress-wrap">
+                                <span id="voiceclone-current-time" class="time-label">0:00</span>
+                                <div class="mx-progress" id="voiceclone-progress-bar" style="cursor:pointer"><div class="mx-progress-bar" id="voiceclone-progress-fill" style="width:0%"></div></div>
+                                <span id="voiceclone-total-time" class="time-label">0:00</span>
+                            </div>
+                            <button id="voiceclone-download-btn" class="mx-btn-icon" data-ripple title="下载 WAV">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </button>
+                        </div>
+                        <div id="voiceclone-param-summary" class="param-summary">
+                            <div class="param-summary-title">参数摘要</div>
+                            <div id="voiceclone-param-rows" class="param-rows"></div>
+                            <div class="param-actions">
+                                <button id="voiceclone-copy-params" class="mx-btn mx-btn-secondary mx-btn-sm" data-ripple>复制 JSON</button>
+                                <button id="voiceclone-resynthesize" class="mx-btn mx-btn-secondary mx-btn-sm" data-ripple>重新合成</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== Tab: 设置 ====== -->
+            <section id="panel-settings" class="panel">
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">API Key 配置</span>
+                        <span id="settings-api-status" class="mx-badge mx-badge-error">未配置</span>
+                    </div>
+                    <div class="mx-card-body">
+                        <p style="font-size:13px;color:var(--mx-t2);margin-bottom:12px">填入 MiMo API Key 以启用语音合成功能。密钥仅存储在浏览器本地，不会上传到任何服务器。</p>
+                        <div class="mx-input-wrap" style="margin-bottom:12px">
+                            <input type="password" id="settings-api-key" class="mx-input" placeholder="输入你的 MiMo API Key" autocomplete="off">
+                        </div>
+                        <div style="display:flex;gap:8px">
+                            <button id="settings-save-key" class="mx-btn mx-btn-primary mx-btn-sm" data-ripple>保存</button>
+                            <button id="settings-test-btn" class="mx-btn mx-btn-secondary mx-btn-sm" data-ripple>测试连接</button>
+                        </div>
+                        <div id="settings-connection-status" class="connection-status"></div>
+                    </div>
+                </div>
+
+                <div class="mx-card" style="margin-bottom:12px">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">默认参数</span>
+                    </div>
+                    <div class="mx-card-body">
+                        <label class="mx-label">默认音色</label>
+                        <select id="settings-default-voice" class="mx-input" style="margin-bottom:12px;cursor:pointer">
+                            <option value="mimo_default">默认音色 (mimo_default)</option>
+                        </select>
+                        <div class="mx-switch">
+                            <input type="checkbox" id="settings-default-stream">
+                            <div class="mx-switch-track"><div class="mx-switch-thumb"></div></div>
+                            <span class="mx-switch-label">默认流式输出</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mx-card">
+                    <div class="mx-card-head">
+                        <span class="mx-card-title">关于</span>
+                    </div>
+                    <div class="mx-card-body">
+                        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+                            <div style="display:flex;justify-content:space-between"><span style="color:var(--mx-t3)">版本</span><span>v2.5.0</span></div>
+                            <div style="display:flex;justify-content:space-between"><span style="color:var(--mx-t3)">模型</span><span>MiMo-V2.5-TTS</span></div>
+                            <div style="display:flex;justify-content:space-between"><span style="color:var(--mx-t3)">API 平台</span><a href="https://platform.xiaomimimo.com" target="_blank" style="color:var(--mx-primary)">platform.xiaomimimo.com</a></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== 历史记录 ====== -->
+            <div class="mx-card" style="margin-top:16px">
+                <div class="mx-card-head" style="cursor:pointer" id="history-toggle">
+                    <span class="mx-card-title">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        合成历史
+                        <span id="history-count" class="mx-count" style="margin-left:4px">0</span>
+                    </span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="history-chevron"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div id="history-panel" class="mx-card-body" style="display:none">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                        <span style="font-size:12px;color:var(--mx-t3)">最近 50 条记录</span>
+                        <button id="history-clear" class="mx-btn mx-btn-secondary mx-btn-sm" data-ripple>清空历史</button>
+                    </div>
+                    <div id="history-list" class="history-list">
+                        <div class="mx-empty">
+                            <div class="mx-empty-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                            <div class="mx-empty-title">暂无合成记录</div>
+                            <div class="mx-empty-desc">合成语音后，记录会自动保存在这里</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div class="card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
-                    风格控制（音频标签）
-                </div>
-                <div class="tags-section">
-                    <div class="tags-label">风格标签</div>
-                    <div id="voiceclone-style-tags" class="tags-container"></div>
-                </div>
-                <div id="voiceclone-tags-preview" class="tags-preview hidden">
-                    <span class="tags-preview-label">前缀：</span>
-                    <code id="voiceclone-tags-preview-text"></code>
-                </div>
-
-                <!-- 批量模式 -->
-                <div class="toggle-row" style="margin-top: 0; margin-bottom: 12px;">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="voiceclone-batch-toggle" class="toggle-input batch-toggle" data-panel="voiceclone">
-                        <span class="toggle-switch"></span>
-                        <span>批量模式</span>
-                    </label>
-                    <span class="toggle-hint">每行一段文本</span>
-                </div>
-
-                <textarea id="voiceclone-tagged-text" class="textarea" rows="3" placeholder="输入要合成的文本"></textarea>
-                <div class="char-count"><span id="voiceclone-text-count">0</span> 字</div>
-
-                <div id="voiceclone-batch-progress" class="batch-progress hidden">
-                    <div class="batch-info">
-                        <span id="voiceclone-batch-count">共 0 段</span>
-                        <span id="voiceclone-batch-status"></span>
-                    </div>
-                    <div class="batch-bar"><div id="voiceclone-batch-fill" class="batch-bar-fill"></div></div>
-                    <label class="toggle-label compact" style="margin-top: 8px;">
-                        <input type="checkbox" id="voiceclone-batch-autoplay" class="toggle-input" checked>
-                        <span class="toggle-switch"></span>
-                        <span>每段合成后自动播放</span>
-                    </label>
-                </div>
-
-                <div class="tags-section">
-                    <div class="tags-label">插入音频标签</div>
-                    <div id="voiceclone-audio-tags" class="tags-container compact"></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="action-row">
-                    <div class="stream-toggle">
-                        <label class="toggle-label compact">
-                            <input type="checkbox" id="voiceclone-stream-toggle" class="toggle-input">
-                            <span class="toggle-switch"></span>
-                            <span>流式输出</span>
-                        </label>
-                    </div>
-                    <button id="voiceclone-synthesize-btn" class="btn btn-primary btn-lg btn-synthesize">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        <span class="btn-text">开始合成</span>
-                    </button>
-                </div>
-            </div>
-
-            <div id="voiceclone-output" class="card output-card hidden">
-                <div class="card-title">
-                    合成结果
-                    <span id="voiceclone-duration" class="duration-badge"></span>
-                </div>
-                <canvas id="voiceclone-waveform" class="waveform-canvas"></canvas>
-                <div class="player-controls">
-                    <button id="voiceclone-play-btn" class="btn-icon play-btn">
-                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    </button>
-                    <div class="progress-wrap">
-                        <span id="voiceclone-current-time" class="time-label">0:00</span>
-                        <div class="progress-bar" id="voiceclone-progress-bar"><div class="progress-fill" id="voiceclone-progress-fill"></div></div>
-                        <span id="voiceclone-total-time" class="time-label">0:00</span>
-                    </div>
-                    <div class="volume-wrap">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                        <input type="range" id="voiceclone-volume" class="volume-slider" min="0" max="1" step="0.05" value="1">
-                    </div>
-                    <button id="voiceclone-download-btn" class="btn-icon" title="下载 WAV">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    </button>
-                </div>
-                <div id="voiceclone-param-summary" class="param-summary">
-                    <div class="param-summary-title">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        参数摘要
-                    </div>
-                    <div id="voiceclone-param-rows" class="param-rows"></div>
-                    <div class="param-actions">
-                        <button id="voiceclone-copy-params" class="btn btn-secondary btn-sm">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            复制为 JSON
-                        </button>
-                        <button id="voiceclone-resynthesize" class="btn btn-secondary btn-sm">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                            重新合成
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ====== Tab: 设置 ====== -->
-        <section id="panel-settings" class="panel">
-            <div class="panel-header">
-                <h1 class="panel-title">设置</h1>
-                <p class="panel-desc">管理 API 连接、默认参数和应用信息</p>
-            </div>
-
-            <!-- API Key 配置 -->
-            <div class="card settings-card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-                    API Key 配置
-                    <span id="settings-api-status" class="settings-status-badge settings-status-off">未配置</span>
-                </div>
-                <p class="settings-card-desc">填入 MiMo API Key 以启用语音合成功能。密钥仅存储在浏览器本地，不会上传到任何服务器。</p>
-                <div class="settings-api-input-wrap">
-                    <input type="password" id="settings-api-key" class="api-key-input" placeholder="输入你的 MiMo API Key" autocomplete="off">
-                    <button id="settings-toggle-key" class="btn-icon" title="显示/隐藏">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    </button>
-                </div>
-                <div class="settings-api-actions">
-                    <button id="settings-save-key" class="btn btn-primary btn-sm">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                        保存
-                    </button>
-                    <button id="settings-test-btn" class="btn btn-secondary btn-sm">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                        测试连接
-                    </button>
-                </div>
-                <div id="settings-connection-status" class="connection-status"></div>
-            </div>
-
-            <!-- 默认参数 -->
-            <div class="card settings-card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    默认参数
-                </div>
-                <p class="settings-card-desc">设置默认音色和合成行为，新建合成时自动应用。</p>
-                <div class="settings-param-group">
-                    <label class="settings-param-label">默认音色</label>
-                    <select id="settings-default-voice" class="settings-select">
-                        <option value="mimo_default">默认音色 (mimo_default)</option>
-                    </select>
-                </div>
-                <div class="settings-param-group">
-                    <label class="settings-param-label">默认流式输出</label>
-                    <label class="toggle-label compact">
-                        <input type="checkbox" id="settings-default-stream" class="toggle-input">
-                        <span class="toggle-switch"></span>
-                        <span>开启后默认使用流式合成</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- 关于 -->
-            <div class="card settings-card">
-                <div class="card-title">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    关于
-                </div>
-                <div class="about-grid">
-                    <div class="about-item">
-                        <span class="about-label">版本</span>
-                        <span class="about-value">v2.5.0</span>
-                    </div>
-                    <div class="about-item">
-                        <span class="about-label">模型</span>
-                        <span class="about-value">MiMo-V2.5-TTS</span>
-                    </div>
-                    <div class="about-item">
-                        <span class="about-label">API 平台</span>
-                        <a href="https://platform.xiaomimimo.com" target="_blank" class="about-link">platform.xiaomimimo.com</a>
-                    </div>
-                    <div class="about-item">
-                        <span class="about-label">GitHub</span>
-                        <a href="https://github.com/xiaomimimo" target="_blank" class="about-link">github.com/xiaomimimo</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ====== 历史记录面板 ====== -->
-        <section class="history-section">
-            <button id="history-toggle" class="history-toggle">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span>合成历史</span>
-                <span id="history-count" class="history-count">0</span>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" class="history-chevron"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div id="history-panel" class="history-panel collapsed">
-                <div class="history-header">
-                    <span class="history-header-title">最近 50 条记录</span>
-                    <button id="history-clear" class="btn btn-secondary btn-sm">清空历史</button>
-                </div>
-                <div id="history-list" class="history-list">
-                    <div class="history-empty">暂无合成记录</div>
-                </div>
-            </div>
-        </section>
-
-    </main>
+        </main>
+    </div>
 </div>
 
+<!-- Miuix Console 框架 -->
+<script src="/miuix-console/miuix-console.js"></script>
+<!-- TTS 应用 -->
 <script src="/js/utils.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/audio.js"></script>

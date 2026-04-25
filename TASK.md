@@ -1,7 +1,39 @@
 # MiMo-V2.5-TTS Web UI — 项目任务分解
 
 > 基于小米 MiMo-V2.5-TTS 系列 API 的语音合成 Web 应用
-> 技术栈：FastAPI + httpx + websockets（后端）| 原生 HTML/CSS/JS（前端）
+> 技术栈：FastAPI + httpx + websockets（后端）| Miuix Console + 原生 JS（前端）
+
+---
+
+## ✅ 已完成：Miuix Console 重构 (2026-04-25)
+
+使用 [Miuix Console](https://github.com/bmbxwbh/miuix-console) 框架重构前端 UI。
+
+### 改动内容
+
+| 文件 | 改动 |
+|------|------|
+| `static/index.html` | 完全重写，使用 mx-* 组件类、MiSans 字体、Miuix 布局系统 |
+| `static/css/style.css` | 完全重写，使用 --mx-* 设计令牌，遵循纯色背景原则 |
+| `static/js/ui.js` | 重写，使用 MxToast 替代自定义 toast，适配 mx-* 组件 |
+| `static/js/app.js` | 重写，使用 MxTheme 主题系统，适配新 HTML 结构 |
+| `static/miuix-console/` | 引入 Miuix Console 框架文件 |
+
+### 设计原则（来自 AI_GUIDE.md）
+- ✅ 纯色背景，拒绝渐变
+- ✅ 使用 --mx-* CSS 变量
+- ✅ MiSans 字体
+- ✅ 深色优先
+- ✅ mx-* 组件类（card、btn、input、switch、tabs、badge、progress、upload 等）
+- ✅ MxToast 通知系统
+- ✅ MxTheme 主题切换
+- ✅ data-ripple 涟漪效果
+
+### 未改动的文件
+- `api.js` — API 调用逻辑不变
+- `audio.js` — Web Audio 播放器不变
+- `utils.js` — 工具函数不变
+- 后端全部文件不变
 
 ---
 

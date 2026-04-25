@@ -1,36 +1,19 @@
 /**
- * MiMo-V2.5-TTS Web UI — UI 交互组件
+ * MiMo-V2.5-TTS Web UI — UI 交互组件 (Miuix Console 版)
+ *
+ * 使用 Miuix Console 框架的组件和设计令牌
  */
 
 'use strict';
 
 const UI = {
-    /** Toast 通知 */
+    /** Toast 通知 — 使用 MxToast */
     toast(message, type = 'info', duration = 3000) {
-        const container = document.getElementById('toast-container');
-        const iconMap = {
-            success: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
-            error: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-            info: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
-        };
-
-        const el = document.createElement('div');
-        el.className = `toast ${type}`;
-        el.innerHTML = `
-            <span class="toast-icon">${iconMap[type] || iconMap.info}</span>
-            <span class="toast-message">${message}</span>
-            <button class="toast-close">&times;</button>
-        `;
-
-        el.querySelector('.toast-close').onclick = () => removeToast(el);
-        container.appendChild(el);
-
-        setTimeout(() => removeToast(el), duration);
-
-        function removeToast(t) {
-            if (t.classList.contains('removing')) return;
-            t.classList.add('removing');
-            setTimeout(() => t.remove(), 300);
+        if (typeof MxToast !== 'undefined') {
+            MxToast.show({ message, type, duration });
+        } else {
+            // fallback
+            console.log(`[${type}] ${message}`);
         }
     },
 
@@ -63,11 +46,7 @@ const UI = {
     renderVoiceGrid(voices, selectedId, onSelect, onPreview) {
         const grid = document.getElementById('voice-grid');
         grid.innerHTML = '';
-        const genderIcon = {
-            male: '♂',
-            female: '♀',
-            neutral: '◉',
-        };
+        const genderIcon = { male: '♂', female: '♀', neutral: '◉' };
         voices.forEach(v => {
             const card = document.createElement('div');
             card.className = `voice-card${v.id === selectedId ? ' selected' : ''}`;
@@ -110,7 +89,6 @@ const UI = {
             catEl.className = 'tag-chip-category';
             catEl.textContent = category;
             container.appendChild(catEl);
-
             items.forEach(tag => {
                 const chip = document.createElement('span');
                 chip.className = `tag-chip${selectedSet.has(tag) ? ' selected' : ''}`;
@@ -158,30 +136,16 @@ const UI = {
         });
     },
 
-    /** 初始化子 Tab 切换 */
-    initSubTabs(tabsContainer, onSwitch) {
-        const tabs = tabsContainer.querySelectorAll('.sub-tab');
-        const indicator = tabsContainer.querySelector('.sub-tab-indicator');
-
-        function updateIndicator() {
-            const active = tabsContainer.querySelector('.sub-tab.active');
-            if (active && indicator) {
-                indicator.style.left = active.offsetLeft + 'px';
-                indicator.style.width = active.offsetWidth + 'px';
-            }
-        }
-
+    /** 初始化 Miuix Tab 切换 */
+    initMxTabs(tabsContainer, onSwitch) {
+        const tabs = tabsContainer.querySelectorAll('.mx-tab');
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                updateIndicator();
                 if (onSwitch) onSwitch(tab.dataset.subtab);
             });
         });
-
-        // 初始位置
-        requestAnimationFrame(updateIndicator);
     },
 
     /** 字数统计绑定 */
@@ -203,5 +167,33 @@ const UI = {
         textarea.selectionStart = textarea.selectionEnd = start + text.length;
         textarea.focus();
         textarea.dispatchEvent(new Event('input'));
+    },
+
+    /** 更新侧边栏 API 状态 */
+    updateApiStatus(hasKey) {
+        const badge = document.getElementById('sidebar-api-status');
+        const settingsBadge = document.getElementById('settings-api-status');
+        if (badge) {
+            badge.className = `mx-badge ${hasKey ? 'mx-badge-success' : 'mx-badge-error'}`;
+            badge.querySelector('span').textContent = hasKey ? 'API 已连接' : 'API 未配置';
+        }
+        if (settingsBadge) {
+            settingsBadge.className = `mx-badge ${hasKey ? 'mx-badge-success' : 'mx-badge-error'}`;
+            settingsBadge.textContent = hasKey ? '已配置' : '未配置';
+        }
+    },
+
+    /** 更新页面标题 */
+    updatePageTitle(tab) {
+        const titles = {
+            preset: ['预置音色合成', '选择音色、控制风格，一句话生成自然语音'],
+            voicedesign: ['音色设计', '用文字描述你想要的音色，AI 即刻生成'],
+            voiceclone: ['音色复刻', '上传音频样本，精准复刻目标音色'],
+            settings: ['设置', '管理 API 连接、默认参数和应用信息'],
+        };
+        const [title, desc] = titles[tab] || ['', ''];
+        document.getElementById('page-title').textContent = title;
+        document.getElementById('page-desc').textContent = desc;
+        document.getElementById('breadcrumb-current').textContent = title;
     },
 };
